@@ -1,18 +1,21 @@
 /*
-  XIAO nRF52840 Plus I2S register bring-up.
+  XIAO nRF52840 Plus reserved I2S audio output bring-up.
 
   The 147_nRF52840 application code uses PDM for the onboard microphone.
-  This file is a minimal nRF52840 I2S clock/data startup skeleton for boards
-  or add-ons that expose I2S pins.
+  This file is a minimal nRF52840 I2S TX skeleton for the reserved audio
+  output pins:
+    SD  = D11
+    SCK = D12
+    WS  = D13
 */
 
 #include <Arduino.h>
 #include <Adafruit_TinyUSB.h>
 #include <nrf.h>
 
-static constexpr uint8_t I2S_SCK_PIN = D0;
-static constexpr uint8_t I2S_LRCK_PIN = D1;
-static constexpr uint8_t I2S_SDOUT_PIN = D2;
+static constexpr uint8_t I2S_SDOUT_PIN = D11;
+static constexpr uint8_t I2S_SCK_PIN = D12;
+static constexpr uint8_t I2S_LRCK_PIN = D13;
 
 // The EasyDMA TX buffer must stay alive while I2S is running.
 static int16_t txBuffer[64];
@@ -60,8 +63,8 @@ void setup() {
   delay(800);
 
   Serial.println("=== I2S basic ===");
-  Serial.println("Starting nRF52840 I2S TX skeleton");
-  Serial.println("Default pins: SCK=D0 LRCK=D1 SDOUT=D2");
+  Serial.println("Starting nRF52840 reserved I2S audio output");
+  Serial.println("Pins: SD=D11 SCK=D12 WS=D13");
 
   initI2S();
   Serial.println("[I2S] started");
