@@ -6,6 +6,7 @@
 */
 
 #include <Arduino.h>
+#include <Adafruit_TinyUSB.h>
 #include <Wire.h>
 #include "SparkFunLSM6DS3.h"
 

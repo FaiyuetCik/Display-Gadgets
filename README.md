@@ -11,3 +11,11 @@ Wiki参考：
 - https://wiki.seeedstudio.com/XIAO-BLE-Sense-IMU-Usage/
 - https://wiki.seeedstudio.com/xiao_esp32s3_sense_filesystem/
 - https://wiki.seeedstudio.com/seeedstudio_round_display_usage/
+
+
+
+用Seeed nRF52 Boards这个SDK，已纠正D17和D19反接情况
+但是这个库存在Serial识别不了的情况，属于底层bug，需要再用一个库打补丁
+```
+#include <Adafruit_TinyUSB.h>
+```

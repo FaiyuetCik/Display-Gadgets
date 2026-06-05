@@ -6,6 +6,7 @@
 */
 
 #include <Arduino.h>
+#include <Adafruit_TinyUSB.h>
 #include <PDM.h>
 
 static constexpr int SAMPLE_RATE_HZ = 16000;

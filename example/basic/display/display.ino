@@ -7,6 +7,7 @@
 */
 
 #include <Arduino.h>
+#include <Adafruit_TinyUSB.h>
 #include <Arduino_GFX_Library.h>
 
 static constexpr uint8_t LCD_CS_PIN   = D2;

@@ -7,6 +7,7 @@
 */
 
 #include <Arduino.h>
+#include <Adafruit_TinyUSB.h>
 #include <nrf.h>
 
 static constexpr uint8_t I2S_SCK_PIN = D0;

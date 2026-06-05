@@ -1,4 +1,5 @@
 #include "axs5106l_device.h"
+#include <Adafruit_TinyUSB.h>
 
 static TwoWire *g_touch_i2c = nullptr;
 

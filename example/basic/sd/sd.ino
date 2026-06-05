@@ -9,6 +9,7 @@
 */
 
 #include <Arduino.h>
+#include <Adafruit_TinyUSB.h>
 #include <SPI.h>
 #include <SdFat.h>
 

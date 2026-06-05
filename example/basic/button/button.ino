@@ -7,6 +7,7 @@
 */
 
 #include <Arduino.h>
+#include <Adafruit_TinyUSB.h>
 
 static constexpr uint8_t BTN_A_PIN = D19;
 static constexpr uint8_t BTN_B_PIN = D15;

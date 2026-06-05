@@ -8,6 +8,7 @@
 */
 
 #include <Arduino.h>
+#include <Adafruit_TinyUSB.h>
 #include <nrf.h>
 #include <nrf_gpio.h>
 
