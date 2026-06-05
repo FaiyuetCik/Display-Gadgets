@@ -29,3 +29,4 @@ https://github.com/adafruit/Adafruit_TinyUSB_Arduino 或则直接在arduino搜�
 
 使用sdfat库驱动sd,但是注意！不用自己下载！nrf52 SDK里自带了一个
 
+各基础功能代码结果放在了image文件夹里
