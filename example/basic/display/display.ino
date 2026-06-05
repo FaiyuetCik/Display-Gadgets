@@ -1,100 +1,158 @@
-/*
-  XIAO nRF52840 Plus + 1.47 Inch Touch Display
-  Basic display test extracted from the 147_nRF52840 examples.
-
-  Required library:
-    - Arduino_GFX_Library
-*/
-
+#include "driver.h"
 #include <Arduino.h>
 #include <Adafruit_TinyUSB.h>
-#include <Arduino_GFX_Library.h>
+#include <SPI.h>
+#include <TFT_eSPI.h>
 
-static constexpr uint8_t LCD_CS_PIN   = D2;
-static constexpr uint8_t LCD_DC_PIN   = D3;
-static constexpr uint8_t LCD_SCK_PIN  = D8;
+TFT_eSPI tft;
+
+// Verified pins for XIAO nRF52840 Plus + 1.47 Inch Touch Display.
+static constexpr uint8_t LCD_CS_PIN = D2;
+static constexpr uint8_t LCD_DC_PIN = D3;
+static constexpr uint8_t LCD_SCK_PIN = D8;
 static constexpr uint8_t LCD_MOSI_PIN = D10;
-static constexpr uint8_t LCD_RST_PIN  = D17;
-static constexpr uint8_t LCD_BL_PIN   = D18;
+static constexpr uint8_t LCD_RST_PIN = D17;
+static constexpr uint8_t LCD_BL_PIN = D18;
 
-Arduino_DataBus *lcdBus = new Arduino_SWSPI(
-  LCD_DC_PIN,
-  LCD_CS_PIN,
-  LCD_SCK_PIN,
-  LCD_MOSI_PIN,
-  GFX_NOT_DEFINED
-);
-
-Arduino_GFX *gfx = new Arduino_ST7789(
-  lcdBus,
-  LCD_RST_PIN,
-  0,
-  false,
-  172,
-  320,
-  34,
-  0,
-  34,
-  0
-);
-
-static void lcdHardReset() {
-  pinMode(LCD_RST_PIN, OUTPUT);
-  digitalWrite(LCD_RST_PIN, HIGH);
+static void applyXIAO147PanelFix() {
+  tft.writecommand(0x36);
+  tft.writedata(0x48);
   delay(10);
-  digitalWrite(LCD_RST_PIN, LOW);
-  delay(30);
-  digitalWrite(LCD_RST_PIN, HIGH);
-  delay(150);
 }
 
-static void applyPanelFix() {
-  lcdBus->beginWrite();
-  lcdBus->writeC8D8(0x36, 0x48);
-  lcdBus->endWrite();
+static void setXIAO147Rotation(uint8_t rotation) {
+  tft.setRotation(rotation);
+
+  if (rotation == 0) {
+    applyXIAO147PanelFix();
+  }
+}
+
+static void forceBacklightOn() {
+  pinMode(LCD_BL_PIN, OUTPUT);
+  digitalWrite(LCD_BL_PIN, HIGH);
+  analogWrite(LCD_BL_PIN, 255);
+}
+
+static void hardResetPanel() {
+  pinMode(LCD_RST_PIN, OUTPUT);
+
+  digitalWrite(LCD_RST_PIN, HIGH);
+  delay(20);
+
+  digitalWrite(LCD_RST_PIN, LOW);
+  delay(80);
+
+  digitalWrite(LCD_RST_PIN, HIGH);
+  delay(180);
+}
+
+static void preparePins() {
+  pinMode(LCD_CS_PIN, OUTPUT);
+  pinMode(LCD_DC_PIN, OUTPUT);
+  pinMode(LCD_SCK_PIN, OUTPUT);
+  pinMode(LCD_MOSI_PIN, OUTPUT);
+
+  digitalWrite(LCD_CS_PIN, HIGH);
+  digitalWrite(LCD_DC_PIN, HIGH);
+  digitalWrite(LCD_SCK_PIN, LOW);
+  digitalWrite(LCD_MOSI_PIN, LOW);
+}
+
+static void flashColors() {
+  const uint16_t colors[] = {
+    TFT_RED,
+    TFT_GREEN,
+    TFT_BLUE,
+    TFT_WHITE,
+    TFT_BLACK
+  };
+
+  for (uint8_t i = 0; i < 5; i++) {
+    tft.fillScreen(colors[i]);
+    delay(450);
+  }
+}
+
+static void drawColorBars() {
+  const uint16_t colors[] = {
+    TFT_RED,
+    TFT_GREEN,
+    TFT_BLUE,
+    TFT_CYAN,
+    TFT_MAGENTA,
+    TFT_YELLOW,
+    TFT_WHITE,
+    TFT_BLACK
+  };
+
+  const int w = tft.width();
+  const int h = tft.height();
+  const int barH = h / 8;
+
+  for (uint8_t i = 0; i < 8; i++) {
+    tft.fillRect(0, i * barH, w, barH, colors[i]);
+  }
+
+  delay(1200);
+}
+
+static void drawFinalScreen() {
+  const int w = tft.width();
+  const int h = tft.height();
+
+  tft.fillScreen(TFT_BLACK);
+
+  tft.drawRoundRect(4, 4, w - 8, h - 8, 10, TFT_DARKGREY);
+  tft.drawRoundRect(8, 8, w - 16, h - 16, 8, TFT_BLUE);
+
+  tft.setTextDatum(MC_DATUM);
+
+  tft.setTextColor(TFT_CYAN, TFT_BLACK);
+  tft.drawString("Seeed_GFX Test", w / 2, 42, 2);
+
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  tft.drawString("Hello XIAO!", w / 2, 98, 4);
+
+  tft.setTextColor(TFT_YELLOW, TFT_BLACK);
+  tft.drawString("1.47 Inch", w / 2, 152, 2);
+  tft.drawString("Touch Display", w / 2, 178, 2);
+
+  tft.setTextColor(TFT_GREEN, TFT_BLACK);
+  tft.drawString("Powered By", w / 2, 230, 2);
+  tft.drawString("XIAO nRF52840 Plus", w / 2, 256, 2);
+
+  tft.drawFastHLine(28, 292, w - 56, TFT_DARKGREY);
 }
 
 void setup() {
   Serial.begin(115200);
   delay(1000);
 
-  pinMode(LCD_BL_PIN, OUTPUT);
-  analogWrite(LCD_BL_PIN, 255);
+  Serial.println();
+  Serial.println("Seeed_GFX 1.47 Inch Touch Display LCD Demo");
+  Serial.println("Board: XIAO nRF52840 Plus");
 
-  lcdHardReset();
+  preparePins();
 
-  if (!gfx->begin()) {
-    Serial.println("[LCD] begin failed");
-    while (1) delay(1000);
-  }
+  forceBacklightOn();
+  hardResetPanel();
 
-  applyPanelFix();
+  tft.init();
+  setXIAO147Rotation(0);
 
-  gfx->fillScreen(RGB565_BLACK);
-  gfx->setTextColor(RGB565_LIGHTGREEN, RGB565_BLACK);
-  gfx->setTextSize(2);
-  gfx->setCursor(8, 18);
-  gfx->println("Hello XIAO");
+  Serial.print("LCD width: ");
+  Serial.println(tft.width());
 
-  gfx->setTextColor(RGB565_WHITE, RGB565_BLACK);
-  gfx->setTextSize(1);
-  gfx->setCursor(8, 52);
-  gfx->println("1.47 display basic");
+  Serial.print("LCD height: ");
+  Serial.println(tft.height());
 
-  gfx->fillRect(8, 82, 36, 40, RGB565_RED);
-  gfx->fillRect(48, 82, 36, 40, RGB565_GREEN);
-  gfx->fillRect(88, 82, 36, 40, RGB565_BLUE);
-  gfx->fillRect(128, 82, 36, 40, RGB565_WHITE);
+  flashColors();
+  drawColorBars();
+  drawFinalScreen();
 
-  Serial.println("[LCD] basic display test ready");
+  Serial.println("LCD demo finished.");
 }
 
 void loop() {
-  static uint32_t frame = 0;
-  gfx->fillRect(8, 150, 156, 18, RGB565_BLACK);
-  gfx->setCursor(8, 150);
-  gfx->setTextColor(RGB565_CYAN, RGB565_BLACK);
-  gfx->print("frame=");
-  gfx->print(frame++);
-  delay(500);
 }

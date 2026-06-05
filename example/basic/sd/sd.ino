@@ -66,7 +66,11 @@ static void listRoot() {
 
 void setup() {
   Serial.begin(115200);
-  delay(800);
+
+  while (!Serial) {
+    delay(10);
+  }
+  delay(300);
 
   Serial.println("=== SD basic ===");
 

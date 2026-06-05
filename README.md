@@ -5,7 +5,6 @@ Contains hardware documentation, software drivers, factory firmware, and sample 
 驱动：
 - https://github.com/Seeed-Studio/Seeed_GFX
 - https://github.com/Seeed-Studio/Seeed_Arduino_LSM6DS3
-- https://github.com/greiman/SdFat
 
 Wiki参考：
 - https://wiki.seeedstudio.com/XIAO-BLE-Sense-IMU-Usage/
@@ -16,6 +15,17 @@ Wiki参考：
 
 用Seeed nRF52 Boards这个SDK，已纠正D17和D19反接情况
 但是这个库存在Serial识别不了的情况，属于底层bug，需要再用一个库打补丁
+https://github.com/adafruit/Adafruit_TinyUSB_Arduino 或则直接在arduino搜索下载
+
 ```
 #include <Adafruit_TinyUSB.h>
 ```
+
+使用SEEED_GFX要将原来的TFT_eSPI库删掉
+
+报错缺少Seeed_Arduino_FS库，需要前往https://github.com/Seeed-Studio/Seeed_Arduino_FS 或者直接在arduino搜索下载
+
+使用Seeed_Arduino_LSM6DS3库驱动IMU
+
+使用sdfat库驱动sd,但是注意！不用自己下载！nrf52 SDK里自带了一个
+

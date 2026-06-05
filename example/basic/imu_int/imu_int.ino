@@ -8,7 +8,7 @@
 #include <Arduino.h>
 #include <Adafruit_TinyUSB.h>
 #include <Wire.h>
-#include "SparkFunLSM6DS3.h"
+#include "LSM6DS3.h"
 
 static constexpr uint8_t IMU_INT_PIN = D14;
 static constexpr uint8_t LSM6DS3_ADDR = 0x6A;
