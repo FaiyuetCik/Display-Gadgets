@@ -13,6 +13,7 @@
 static constexpr uint8_t TOUCH_RST_PIN = D17;
 static constexpr uint8_t TOUCH_INT_PIN = D7;
 
+// Shared result structure filled by get_touch_data().
 touch_data_t touchData;
 
 void setup() {
@@ -20,12 +21,15 @@ void setup() {
   delay(800);
 
   Serial.println("=== Touch basic ===");
+
+  // Touch controller is on the board I2C bus.
   Wire.begin();
   touch_init(&Wire, TOUCH_RST_PIN, TOUCH_INT_PIN);
 }
 
 void loop() {
   if (get_touch_data(&touchData)) {
+    // Print the first touch point. This basic test ignores multi-touch details.
     Serial.print("touches=");
     Serial.print(touchData.touch_num);
     Serial.print(" x=");

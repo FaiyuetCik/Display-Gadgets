@@ -14,14 +14,19 @@ static constexpr uint8_t I2S_SCK_PIN = D0;
 static constexpr uint8_t I2S_LRCK_PIN = D1;
 static constexpr uint8_t I2S_SDOUT_PIN = D2;
 
+// The EasyDMA TX buffer must stay alive while I2S is running.
 static int16_t txBuffer[64];
 
 static void initI2S() {
+  // Fill the output buffer with a simple square-wave-like sample pattern.
   for (size_t i = 0; i < sizeof(txBuffer) / sizeof(txBuffer[0]); ++i) {
     txBuffer[i] = (i & 1) ? 12000 : -12000;
   }
 
+  // Stop the peripheral before changing configuration registers.
   NRF_I2S->ENABLE = 0;
+
+  // Configure nRF52840 as I2S master, TX-only, 16-bit I2S format.
   NRF_I2S->CONFIG.MODE = I2S_CONFIG_MODE_MODE_Master;
   NRF_I2S->CONFIG.RXEN = I2S_CONFIG_RXEN_RXEN_Disabled;
   NRF_I2S->CONFIG.TXEN = I2S_CONFIG_TXEN_TXEN_Enabled;
@@ -32,17 +37,20 @@ static void initI2S() {
   NRF_I2S->CONFIG.FORMAT = I2S_CONFIG_FORMAT_FORMAT_I2S;
   NRF_I2S->CONFIG.CHANNELS = I2S_CONFIG_CHANNELS_CHANNELS_Left;
 
+  // Convert Arduino Dx pin names to nRF GPIO numbers for the peripheral.
   NRF_I2S->PSEL.SCK = g_ADigitalPinMap[I2S_SCK_PIN];
   NRF_I2S->PSEL.LRCK = g_ADigitalPinMap[I2S_LRCK_PIN];
   NRF_I2S->PSEL.SDOUT = g_ADigitalPinMap[I2S_SDOUT_PIN];
   NRF_I2S->PSEL.SDIN = 0xFFFFFFFF;
   NRF_I2S->PSEL.MCK = 0xFFFFFFFF;
 
+  // MAXCNT is in 32-bit words for the nRF I2S EasyDMA buffer.
   NRF_I2S->TXD.PTR = (uint32_t)txBuffer;
   NRF_I2S->RXD.PTR = 0;
   NRF_I2S->TXD.MAXCNT = sizeof(txBuffer) / sizeof(uint32_t);
   NRF_I2S->RXD.MAXCNT = 0;
 
+  // Enable and start the peripheral.
   NRF_I2S->ENABLE = 1;
   NRF_I2S->TASKS_START = 1;
 }
@@ -61,6 +69,7 @@ void setup() {
 
 void loop() {
   if (NRF_I2S->EVENTS_TXPTRUPD) {
+    // Feed the same buffer again whenever the peripheral asks for the next one.
     NRF_I2S->EVENTS_TXPTRUPD = 0;
     NRF_I2S->TXD.PTR = (uint32_t)txBuffer;
   }

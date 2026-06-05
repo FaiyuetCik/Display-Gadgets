@@ -1,5 +1,6 @@
 // Seeed_GFX setup for ST7789 172x320 TFT.
 // User_Setup_Select.h loads this file from the sketch folder.
 
+// This combo selects Seeed's predefined XIAO TFT Display Board profile.
 #define BOARD_SCREEN_COMBO 75
 #define USE_XIAO_TFT_DISPLAY_BOARD

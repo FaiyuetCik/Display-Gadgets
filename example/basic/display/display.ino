@@ -7,6 +7,7 @@
 TFT_eSPI tft;
 
 // Verified pins for XIAO nRF52840 Plus + 1.47 Inch Touch Display.
+// The Seeed_GFX/TFT_eSPI setup itself is selected by driver.h.
 static constexpr uint8_t LCD_CS_PIN = D2;
 static constexpr uint8_t LCD_DC_PIN = D3;
 static constexpr uint8_t LCD_SCK_PIN = D8;
@@ -15,6 +16,7 @@ static constexpr uint8_t LCD_RST_PIN = D17;
 static constexpr uint8_t LCD_BL_PIN = D18;
 
 static void applyXIAO147PanelFix() {
+  // The 172x320 JD9853A panel needs this MADCTL value for correct orientation.
   tft.writecommand(0x36);
   tft.writedata(0x48);
   delay(10);
@@ -23,18 +25,21 @@ static void applyXIAO147PanelFix() {
 static void setXIAO147Rotation(uint8_t rotation) {
   tft.setRotation(rotation);
 
+  // Re-apply the panel-specific fix after rotation 0 changes TFT_eSPI state.
   if (rotation == 0) {
     applyXIAO147PanelFix();
   }
 }
 
 static void forceBacklightOn() {
+  // Backlight is controlled by PWM on D18. 255 = full brightness.
   pinMode(LCD_BL_PIN, OUTPUT);
   digitalWrite(LCD_BL_PIN, HIGH);
   analogWrite(LCD_BL_PIN, 255);
 }
 
 static void hardResetPanel() {
+  // A hardware reset makes the display startup deterministic after flashing.
   pinMode(LCD_RST_PIN, OUTPUT);
 
   digitalWrite(LCD_RST_PIN, HIGH);
@@ -48,6 +53,7 @@ static void hardResetPanel() {
 }
 
 static void preparePins() {
+  // Put SPI/control pins in an idle state before the display driver starts.
   pinMode(LCD_CS_PIN, OUTPUT);
   pinMode(LCD_DC_PIN, OUTPUT);
   pinMode(LCD_SCK_PIN, OUTPUT);
@@ -60,6 +66,7 @@ static void preparePins() {
 }
 
 static void flashColors() {
+  // Full-screen colors make wiring/order problems obvious at a glance.
   const uint16_t colors[] = {
     TFT_RED,
     TFT_GREEN,
@@ -75,6 +82,7 @@ static void flashColors() {
 }
 
 static void drawColorBars() {
+  // Draw several color bands to verify RGB color output.
   const uint16_t colors[] = {
     TFT_RED,
     TFT_GREEN,
@@ -98,6 +106,7 @@ static void drawColorBars() {
 }
 
 static void drawFinalScreen() {
+  // Final static screen verifies text rendering, geometry, and panel bounds.
   const int w = tft.width();
   const int h = tft.height();
 
@@ -135,6 +144,7 @@ void setup() {
 
   preparePins();
 
+  // Power up the panel path before calling tft.init().
   forceBacklightOn();
   hardResetPanel();
 
@@ -155,4 +165,5 @@ void setup() {
 }
 
 void loop() {
+  // Static display demo: all drawing is done in setup().
 }

@@ -13,11 +13,13 @@
 static constexpr uint8_t TOUCH_RST_PIN = D17;
 static constexpr uint8_t TOUCH_INT_PIN = D7;
 
+// Latches set by the D7 interrupt handler.
 volatile bool touchIrq = false;
 volatile uint32_t touchIrqCount = 0;
 touch_data_t touchData;
 
 void touchIsr() {
+  // Keep the ISR short; I2C is handled later in loop().
   touchIrq = true;
   touchIrqCount++;
 }
@@ -30,12 +32,14 @@ void setup() {
   Wire.begin();
   touch_init(&Wire, TOUCH_RST_PIN, TOUCH_INT_PIN);
 
+  // AXS5106L INT is active-low in this basic interrupt example.
   pinMode(TOUCH_INT_PIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(TOUCH_INT_PIN), touchIsr, FALLING);
 }
 
 void loop() {
   if (touchIrq) {
+    // Copy the interrupt count atomically before printing.
     noInterrupts();
     touchIrq = false;
     uint32_t count = touchIrqCount;
@@ -46,6 +50,7 @@ void loop() {
   }
 
   if (get_touch_data(&touchData)) {
+    // Coordinates are still read through I2C after the interrupt latch fires.
     Serial.print("touch x=");
     Serial.print(touchData.coords[0].x);
     Serial.print(" y=");
