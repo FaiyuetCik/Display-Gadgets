@@ -48,5 +48,6 @@ https://github.com/adafruit/Adafruit_TinyUSB_Arduino 或则直接在arduino搜�
 | `example/basic/mic` | 使用 PDM 麦克风读取音频峰值，串口输出 `peak`，用于确认麦克风采样是否工作。 |
 | `example/basic/sd` | 使用 nRF52 SDK 自带的 SdFat 挂载 SD 卡，并打印根目录文件列表。 |
 | `example/basic/bat` | 读取 VBAT ADC、电池分压使能和充电状态脚，用于检查电池电压和充电状态。 |
+| `example/basic/bat_esp32s3` | ESP32S3 电池读取示例，使用 D16 读取外接 `316k/160k` 分压后的电池电压。 |
 | `example/basic/button` | 读取 USR1 / USR2 按键状态，USR1 会切换背光亮度，USR2 打印按键状态。 |
 | `example/basic/i2s` | 使用预留 I2S 音频输出引脚 `SD=D11`、`SCK=D12`、`WS=D13` 启动 nRF52840 I2S TX 骨架。 （未测试）|

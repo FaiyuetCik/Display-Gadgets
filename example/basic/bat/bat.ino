@@ -28,7 +28,7 @@ static constexpr float ADC_FULL_SCALE_V = 3.600f;
 
 // Board divider: R16 = 1M, R17 = 499K. Multiply ADC voltage by this ratio
 // to recover the battery-side voltage.
-static constexpr float BAT_DIVIDER_RATIO = (1000.0f + 499.0f) / 499.0f;
+static constexpr float BAT_DIVIDER_RATIO = (1000.0f + 510.0f) / 510.0f;
 
 static void enableBatteryDivider() {
   // READ_BAT is active-low: drive P0.14 low to turn on the divider.
