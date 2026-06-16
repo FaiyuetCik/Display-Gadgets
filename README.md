@@ -51,3 +51,11 @@ https://github.com/adafruit/Adafruit_TinyUSB_Arduino 或则直接在arduino搜�
 | `example/basic/bat_esp32s3` | ESP32S3 电池读取示例，使用 D16 读取外接 `316k/160k` 分压后的电池电压。 |
 | `example/basic/button` | 读取 USR1 / USR2 按键状态，USR1 会切换背光亮度，USR2 打印按键状态。 |
 | `example/basic/i2s` | 使用预留 I2S 音频输出引脚 `SD=D11`、`SCK=D12`、`WS=D13` 启动 nRF52840 I2S TX 骨架。 （未测试）|
+
+## Application
+
+- `example/147_nRF52840/0521_WakeUp_147_nRF52840`
+  - 驱动库适配：使用 Seeed_GFX / `TFT_eSPI` 驱动 1.47 寸屏幕，使用 `Seeed_Arduino_LSM6DS3` 配置 IMU D14 运动唤醒。
+  - 已加入 BAT 电量显示：过 `READ_BAT=P0.14` 使能分压，`PIN_VBAT` 读取电池电压，`CHG=P0.17` 判断充电状态。
+  - 屏幕 `POWER STATE` 区域显示电压和电量百分比，充电时显示黄色小闪电图标。
+  - 唤醒背光已调暗，`BACKLIGHT_AWAKE_PWM = 120`；睡眠时背光关闭，保持 `BACKLIGHT_SLEEP_PWM = 0`。

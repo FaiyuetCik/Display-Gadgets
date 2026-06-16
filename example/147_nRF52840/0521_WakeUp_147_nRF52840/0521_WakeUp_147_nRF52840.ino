@@ -24,19 +24,29 @@
     LCD SCK = D8
     LCD MOSI= D10
     IMU INT = D14
-    LCD RST = D19   // current BSP workaround used in previous working firmware
+    LCD RST = D17
     LCD BL  = D18
+    USR1    = D19
+    USR2    = D15
+    READ_BAT= P0.14
+    CHG     = P0.17
+    VBAT ADC= PIN_VBAT
 
   Required Arduino libraries:
-    - Arduino_GFX_Library
-    - SparkFun LSM6DS3
+    - Seeed_GFX
+    - Seeed_Arduino_LSM6DS3
+    - Adafruit TinyUSB Library
 */
 
+#include "driver.h"
 #include <Arduino.h>
+#include <Adafruit_TinyUSB.h>
 #include <Wire.h>
-#include <Arduino_GFX_Library.h>
-#include "SparkFunLSM6DS3.h"
+#include <SPI.h>
+#include <TFT_eSPI.h>
+#include "LSM6DS3.h"
 #include <nrf.h>
+#include <nrf_gpio.h>
 
 // ========================= Pins =========================
 
@@ -48,34 +58,23 @@ static constexpr uint8_t LCD_SCK_PIN   = D8;
 static constexpr uint8_t LCD_MOSI_PIN  = D10;
 static constexpr uint8_t IMU_INT_PIN   = D14;
 static constexpr uint8_t LCD_BL_PIN    = D18;
-static constexpr uint8_t LCD_RST_PIN   = D19;
+static constexpr uint8_t LCD_RST_PIN   = D17;
 
 // Optional manual test buttons.
-static constexpr uint8_t USR1_PIN = D17; // force sleep
+static constexpr uint8_t USR1_PIN = D19; // force sleep
 static constexpr uint8_t USR2_PIN = D15; // force wake
+
+// nRF52840 Plus battery measurement pins.
+static constexpr uint8_t READ_BAT_P0_PIN = 14; // P0.14 / READ_BAT, active-low divider enable.
+static constexpr uint8_t CHG_P0_PIN = 17;      // P0.17 / CHG, active-low charging status.
+
+#ifndef PIN_VBAT
+#define PIN_VBAT 35
+#endif
 
 // ========================= LCD =========================
 
-Arduino_DataBus *lcdBus = new Arduino_SWSPI(
-  LCD_DC_PIN,
-  LCD_CS_PIN,
-  LCD_SCK_PIN,
-  LCD_MOSI_PIN,
-  GFX_NOT_DEFINED
-);
-
-Arduino_GFX *gfx = new Arduino_ST7789(
-  lcdBus,
-  LCD_RST_PIN,
-  0,
-  false,
-  172,
-  320,
-  34,
-  0,
-  34,
-  0
-);
+TFT_eSPI tft;
 
 // ========================= IMU =========================
 
@@ -94,6 +93,7 @@ static constexpr uint8_t REG_MD1_CFG       = 0x5E;
 
 static constexpr uint32_t AUTO_SLEEP_MS = 8000;
 static constexpr uint32_t UI_REFRESH_MS = 250;
+static constexpr uint32_t BAT_REFRESH_MS = 1000;
 static constexpr uint32_t WAKE_LOCK_MS  = 1200;
 static constexpr uint32_t SLEEP_STATUS_MS = 2000;
 
@@ -103,17 +103,23 @@ static constexpr uint32_t SLEEP_STATUS_MS = 2000;
 // Suggested tuning range: 0x03 ~ 0x0A
 static constexpr uint8_t IMU_WAKE_THRESHOLD = 0x05;
 
-static constexpr uint8_t BACKLIGHT_AWAKE_PWM = 255;
+static constexpr uint8_t BACKLIGHT_AWAKE_PWM = 120;
 static constexpr uint8_t BACKLIGHT_SLEEP_PWM = 0;
 
-static constexpr uint16_t C_BLACK  = RGB565_BLACK;
-static constexpr uint16_t C_WHITE  = RGB565_WHITE;
-static constexpr uint16_t C_GREEN  = RGB565_LIGHTGREEN;
-static constexpr uint16_t C_CYAN   = RGB565_CYAN;
-static constexpr uint16_t C_YELLOW = RGB565_YELLOW;
-static constexpr uint16_t C_RED    = RGB565_RED;
+static constexpr uint16_t C_BLACK  = TFT_BLACK;
+static constexpr uint16_t C_WHITE  = TFT_WHITE;
+static constexpr uint16_t C_GREEN  = TFT_GREEN;
+static constexpr uint16_t C_CYAN   = TFT_CYAN;
+static constexpr uint16_t C_YELLOW = TFT_YELLOW;
+static constexpr uint16_t C_RED    = TFT_RED;
 static constexpr uint16_t C_GRAY   = 0x8410;
 static constexpr uint16_t C_LINE   = 0x39E7;
+
+// Battery ADC conversion, aligned with example/basic/bat.
+static constexpr int ADC_BITS = 12;
+static constexpr int ADC_MAX = (1 << ADC_BITS) - 1;
+static constexpr float ADC_FULL_SCALE_V = 3.600f;
+static constexpr float BAT_DIVIDER_RATIO = (1000.0f + 510.0f) / 510.0f;
 
 // ========================= Runtime state =========================
 
@@ -123,6 +129,7 @@ volatile bool g_usrWakeFlag = false;
 bool g_screenAwake = true;
 uint32_t g_lastActivityMs = 0;
 uint32_t g_lastUiMs = 0;
+uint32_t g_lastBatMs = 0;
 uint32_t g_wakeCount = 0;
 uint32_t g_intCount = 0;
 uint32_t g_lastWakeMs = 0;
@@ -137,6 +144,16 @@ float g_gx = 0.0f;
 float g_gy = 0.0f;
 float g_gz = 0.0f;
 uint8_t g_lastWakeSrc = 0;
+
+struct BatteryState {
+  uint16_t raw = 0;
+  float vadc = 0.0f;
+  float vbat = 0.0f;
+  int percent = 0;
+  bool charging = false;
+};
+
+BatteryState g_bat;
 
 // ========================= Helpers =========================
 
@@ -166,32 +183,115 @@ void usrWakeIsr() {
   g_usrWakeFlag = true;
 }
 
-static void acquireForLcd() {
+static void prepareLcdPins() {
   pinMode(LCD_CS_PIN, OUTPUT);
+  pinMode(LCD_DC_PIN, OUTPUT);
+  pinMode(LCD_SCK_PIN, OUTPUT);
+  pinMode(LCD_MOSI_PIN, OUTPUT);
+
   digitalWrite(LCD_CS_PIN, HIGH);
-  delayMicroseconds(2);
+  digitalWrite(LCD_DC_PIN, HIGH);
+  digitalWrite(LCD_SCK_PIN, LOW);
+  digitalWrite(LCD_MOSI_PIN, LOW);
 }
 
-static void lcdHardReset() {
+static void hardResetPanel() {
   pinMode(LCD_RST_PIN, OUTPUT);
   digitalWrite(LCD_RST_PIN, HIGH);
-  delay(10);
+  delay(20);
   digitalWrite(LCD_RST_PIN, LOW);
-  delay(30);
+  delay(80);
   digitalWrite(LCD_RST_PIN, HIGH);
-  delay(150);
+  delay(180);
 }
 
-static void lcdWriteMadctlFix() {
-  acquireForLcd();
-  lcdBus->beginWrite();
-  lcdBus->writeC8D8(0x36, 0x48);
-  lcdBus->endWrite();
+static void applyXIAO147PanelFix() {
+  tft.writecommand(0x36);
+  tft.writedata(0x48);
+  delay(10);
 }
 
 static void setBacklight(uint8_t pwm) {
   pinMode(LCD_BL_PIN, OUTPUT);
   analogWrite(LCD_BL_PIN, pwm);
+}
+
+static void enableBatteryDivider() {
+  NRF_P0->OUTCLR = (1UL << READ_BAT_P0_PIN);
+  NRF_P0->DIRSET = (1UL << READ_BAT_P0_PIN);
+}
+
+static void disableBatteryDivider() {
+  NRF_P0->DIRCLR = (1UL << READ_BAT_P0_PIN);
+}
+
+static int lipoPercent(float voltage) {
+  struct BatPoint {
+    float v;
+    int p;
+  };
+
+  static const BatPoint table[] = {
+    {4.20f, 100}, {4.10f, 90}, {4.00f, 80}, {3.90f, 70}, {3.80f, 60},
+    {3.75f, 50},  {3.70f, 40}, {3.65f, 30}, {3.60f, 20}, {3.45f, 10},
+    {3.30f, 0}
+  };
+
+  if (voltage >= table[0].v) return 100;
+  if (voltage <= table[10].v) return 0;
+
+  for (uint8_t i = 0; i < 10; i++) {
+    if (voltage <= table[i].v && voltage >= table[i + 1].v) {
+      float span = table[i].v - table[i + 1].v;
+      float t = (voltage - table[i + 1].v) / span;
+      return table[i + 1].p + (int)(t * (table[i].p - table[i + 1].p) + 0.5f);
+    }
+  }
+
+  return 0;
+}
+
+static uint16_t readBatteryRaw() {
+  uint32_t sum = 0;
+
+  for (uint8_t i = 0; i < 6; i++) {
+    (void)analogRead(PIN_VBAT);
+    delay(2);
+  }
+
+  for (uint8_t i = 0; i < 16; i++) {
+    sum += analogRead(PIN_VBAT);
+    delay(2);
+  }
+
+  return (uint16_t)(sum / 16);
+}
+
+static void updateBattery() {
+  enableBatteryDivider();
+  delay(30);
+
+  g_bat.raw = readBatteryRaw();
+  disableBatteryDivider();
+
+  g_bat.vadc = ((float)g_bat.raw * ADC_FULL_SCALE_V) / (float)ADC_MAX;
+  g_bat.vbat = g_bat.vadc * BAT_DIVIDER_RATIO;
+  g_bat.percent = lipoPercent(g_bat.vbat);
+  g_bat.charging = (NRF_P0->IN & (1UL << CHG_P0_PIN)) == 0;
+}
+
+static uint16_t batteryColor() {
+  if (g_bat.percent <= 15) return C_RED;
+  if (g_bat.percent <= 35) return C_YELLOW;
+  return C_GREEN;
+}
+
+static void drawChargeIcon(bool charging) {
+  tft.fillRect(144, 126, 16, 18, C_BLACK);
+  if (!charging) return;
+
+  tft.fillTriangle(151, 126, 145, 136, 151, 136, C_YELLOW);
+  tft.fillTriangle(151, 134, 157, 134, 149, 144, C_YELLOW);
 }
 
 // ========================= nRF System ON sleep =========================
@@ -236,74 +336,72 @@ static void printFixed(int x, int y, uint16_t color, const String &text, int wid
   while ((int)out.length() < width) out += ' ';
   if ((int)out.length() > width) out = out.substring(0, width);
 
-  acquireForLcd();
-  gfx->setTextSize(1);
-  gfx->setTextColor(color, C_BLACK);
-  gfx->setCursor(x, y);
-  gfx->print(out);
+  tft.setTextSize(1);
+  tft.setTextColor(color, C_BLACK);
+  tft.setCursor(x, y);
+  tft.print(out);
 }
 
 // ========================= LCD UI =========================
 
 static bool initLcd() {
+  prepareLcdPins();
   setBacklight(BACKLIGHT_AWAKE_PWM);
-  lcdHardReset();
+  hardResetPanel();
 
-  if (!gfx->begin()) {
-    Serial.println("[LCD] begin failed");
-    return false;
-  }
-
-  lcdWriteMadctlFix();
-  gfx->fillScreen(C_BLACK);
+  tft.init();
+  tft.setRotation(0);
+  applyXIAO147PanelFix();
+  tft.fillScreen(C_BLACK);
   return true;
 }
 
 static void drawAwakeLayout() {
-  acquireForLcd();
-  gfx->fillScreen(C_BLACK);
+  tft.fillScreen(C_BLACK);
 
-  gfx->setTextSize(2);
-  gfx->setTextColor(C_GREEN, C_BLACK);
-  gfx->setCursor(8, 10);
-  gfx->print("Hello,XIAO!");
+  tft.setTextSize(2);
+  tft.setTextColor(C_GREEN, C_BLACK);
+  tft.setCursor(8, 10);
+  tft.print("Hello,XIAO!");
 
-  gfx->setTextSize(1);
-  gfx->setTextColor(C_CYAN, C_BLACK);
-  gfx->setCursor(10, 36);
-  gfx->print("IMU D14 Wake Demo");
+  tft.setTextSize(1);
+  tft.setTextColor(C_CYAN, C_BLACK);
+  tft.setCursor(10, 36);
+  tft.print("IMU D14 Wake Demo");
 
-  gfx->drawFastHLine(8, 52, 156, C_LINE);
+  tft.drawFastHLine(8, 52, 156, C_LINE);
 
-  gfx->drawRoundRect(8, 66, 156, 76, 6, C_CYAN);
-  gfx->setTextColor(C_CYAN, C_BLACK);
-  gfx->setCursor(18, 78);
-  gfx->print("POWER STATE");
-  gfx->setTextColor(C_WHITE, C_BLACK);
-  gfx->setCursor(18, 98);
-  gfx->print("Screen");
-  gfx->setCursor(18, 116);
-  gfx->print("WakeCnt");
+  tft.drawRoundRect(8, 66, 156, 82, 6, C_CYAN);
+  tft.setTextColor(C_CYAN, C_BLACK);
+  tft.setCursor(18, 78);
+  tft.print("POWER STATE");
+  tft.setTextColor(C_WHITE, C_BLACK);
+  tft.setCursor(18, 98);
+  tft.print("Screen");
+  tft.setCursor(18, 116);
+  tft.print("WakeCnt");
+  tft.setCursor(18, 134);
+  tft.print("BAT");
 
-  gfx->drawRoundRect(8, 154, 156, 92, 6, C_YELLOW);
-  gfx->setTextColor(C_YELLOW, C_BLACK);
-  gfx->setCursor(18, 166);
-  gfx->print("MOTION");
-  gfx->setTextColor(C_WHITE, C_BLACK);
-  gfx->setCursor(18, 188);
-  gfx->print("Acc");
-  gfx->setCursor(18, 208);
-  gfx->print("Gyr");
-  gfx->setCursor(18, 228);
-  gfx->print("INT");
+  tft.drawRoundRect(8, 156, 156, 90, 6, C_YELLOW);
+  tft.setTextColor(C_YELLOW, C_BLACK);
+  tft.setCursor(18, 168);
+  tft.print("MOTION");
+  tft.setTextColor(C_WHITE, C_BLACK);
+  tft.setCursor(18, 190);
+  tft.print("Acc");
+  tft.setCursor(18, 210);
+  tft.print("Gyr");
+  tft.setCursor(18, 230);
+  tft.print("INT");
 
-  gfx->drawRoundRect(8, 258, 156, 42, 6, C_GREEN);
-  gfx->setTextColor(C_GREEN, C_BLACK);
-  gfx->setCursor(18, 270);
-  gfx->print("TEST");
-  gfx->setTextColor(C_WHITE, C_BLACK);
-  gfx->setCursor(18, 288);
-  gfx->print("USR1 sleep  USR2 wake");
+  tft.drawRoundRect(8, 258, 156, 42, 6, C_GREEN);
+  tft.setTextColor(C_GREEN, C_BLACK);
+  tft.setCursor(18, 270);
+  tft.print("TEST");
+  tft.setTextColor(C_WHITE, C_BLACK);
+  tft.setCursor(18, 288);
+  tft.print("USR1 sleep  USR2 wake");
 }
 
 static void updateAwakeUi() {
@@ -314,14 +412,18 @@ static void updateAwakeUi() {
   snprintf(buf, sizeof(buf), "%lu", (unsigned long)g_wakeCount);
   printFixed(78, 116, C_YELLOW, buf, 12);
 
+  snprintf(buf, sizeof(buf), "%.2fV %d%%", g_bat.vbat, g_bat.percent);
+  printFixed(48, 134, batteryColor(), buf, 12);
+  drawChargeIcon(g_bat.charging);
+
   snprintf(buf, sizeof(buf), "%.1f %.1f %.1f", g_ax, g_ay, g_az);
-  printFixed(48, 188, C_WHITE, buf, 16);
+  printFixed(48, 190, C_WHITE, buf, 16);
 
   snprintf(buf, sizeof(buf), "%.1f %.1f %.1f", g_gx, g_gy, g_gz);
-  printFixed(48, 208, C_WHITE, buf, 16);
+  printFixed(48, 210, C_WHITE, buf, 16);
 
   snprintf(buf, sizeof(buf), "D14:%lu src:0x%02X", (unsigned long)g_intCount, g_lastWakeSrc);
-  printFixed(48, 228, C_CYAN, buf, 16);
+  printFixed(48, 230, C_CYAN, buf, 16);
 
   uint32_t remain = 0;
   uint32_t now = millis();
@@ -359,15 +461,14 @@ static void screenSleep() {
 
   Serial.println("[SLEEP] screen backlight off, waiting for IMU D14 wake");
 
-  acquireForLcd();
-  gfx->fillScreen(C_BLACK);
-  gfx->setTextSize(2);
-  gfx->setTextColor(C_CYAN, C_BLACK);
-  gfx->setCursor(18, 120);
-  gfx->print("Sleeping...");
-  gfx->setTextSize(1);
-  gfx->setCursor(18, 150);
-  gfx->print("Pick up device to wake");
+  tft.fillScreen(C_BLACK);
+  tft.setTextSize(2);
+  tft.setTextColor(C_CYAN, C_BLACK);
+  tft.setCursor(18, 120);
+  tft.print("Sleeping...");
+  tft.setTextSize(1);
+  tft.setCursor(18, 150);
+  tft.print("Pick up device to wake");
   delay(500);
 
   setBacklight(BACKLIGHT_SLEEP_PWM);
@@ -389,7 +490,7 @@ static bool initImuWakeInterrupt() {
   Wire.begin();
 
   int imuOk = myIMU.begin();
-  Serial.print("[IMU] SparkFun begin=");
+  Serial.print("[IMU] Seeed LSM6DS3 begin=");
   Serial.println(imuOk);
 
   bool ok = true;
@@ -487,6 +588,10 @@ void setup() {
   pinMode(USR2_PIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(USR2_PIN), usrWakeIsr, FALLING);
 
+  analogReadResolution(ADC_BITS);
+  nrf_gpio_cfg_input(CHG_P0_PIN, NRF_GPIO_PIN_PULLUP);
+  disableBatteryDivider();
+
   Serial.println();
   Serial.println("=== XIAO nRF52840 Plus 1.47 IMU D14 Wake Demo v0.2 ===");
   Serial.println("Screen sleeps by backlight off, then nRF enters System ON sleep.");
@@ -499,6 +604,8 @@ void setup() {
     return;
   }
 
+  updateBattery();
+  g_lastBatMs = millis();
   g_lastActivityMs = millis();
   drawAwakeLayout();
   updateAwakeUi();
@@ -538,6 +645,11 @@ void loop() {
   uint32_t now = millis();
 
   if (g_screenAwake) {
+    if (now - g_lastBatMs >= BAT_REFRESH_MS) {
+      g_lastBatMs = now;
+      updateBattery();
+    }
+
     if (now - g_lastUiMs >= UI_REFRESH_MS) {
       g_lastUiMs = now;
       updateImuData();
