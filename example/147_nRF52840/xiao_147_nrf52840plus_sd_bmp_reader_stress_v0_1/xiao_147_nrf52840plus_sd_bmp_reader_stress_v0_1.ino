@@ -24,7 +24,7 @@
         /image002.bmp
 
   Libraries:
-    - Arduino_GFX_Library
+    - Seeed_GFX / TFT_eSPI
     - SdFat
 
   Hardware pin map:
@@ -38,10 +38,12 @@
     LCD BL   = D18
 */
 
+#include "driver.h"
 #include <Arduino.h>
+#include <Adafruit_TinyUSB.h>
 #include <SPI.h>
 #include <SdFat.h>
-#include <Arduino_GFX_Library.h>
+#include <TFT_eSPI.h>
 
 // ========================= Pin map =========================
 
@@ -59,30 +61,11 @@ static constexpr uint8_t LCD_BL_PIN    = D18;
 static constexpr int LCD_W = 172;
 static constexpr int LCD_H = 320;
 
-Arduino_DataBus *lcdBus = new Arduino_SWSPI(
-  LCD_DC_PIN,
-  LCD_CS_PIN,
-  LCD_SCK_PIN,
-  LCD_MOSI_PIN,
-  GFX_NOT_DEFINED
-);
-
-Arduino_GFX *gfx = new Arduino_ST7789(
-  lcdBus,
-  LCD_RST_PIN,
-  0,
-  false,
-  LCD_W,
-  LCD_H,
-  34,
-  0,
-  34,
-  0
-);
+TFT_eSPI tft;
 
 // ========================= SD =========================
 
-SdFat SD;
+SdFat sdCard;
 
 static constexpr uint32_t SD_FREQ_INIT  = 400000;
 static constexpr uint32_t SD_FREQ_RUN_1 = 4000000;
@@ -118,14 +101,14 @@ static constexpr uint32_t SLIDESHOW_DELAY_MS = 1200;
 
 // ========================= Colors =========================
 
-static constexpr uint16_t C_BLACK  = RGB565_BLACK;
-static constexpr uint16_t C_WHITE  = RGB565_WHITE;
-static constexpr uint16_t C_GREEN  = RGB565_LIGHTGREEN;
-static constexpr uint16_t C_CYAN   = RGB565_CYAN;
-static constexpr uint16_t C_YELLOW = RGB565_YELLOW;
-static constexpr uint16_t C_RED    = RGB565_RED;
+static constexpr uint16_t C_BLACK  = TFT_BLACK;
+static constexpr uint16_t C_WHITE  = TFT_WHITE;
+static constexpr uint16_t C_GREEN  = TFT_GREEN;
+static constexpr uint16_t C_CYAN   = TFT_CYAN;
+static constexpr uint16_t C_YELLOW = TFT_YELLOW;
+static constexpr uint16_t C_RED    = TFT_RED;
 static constexpr uint16_t C_GRAY   = 0x8410;
-static constexpr uint16_t C_BLUE   = RGB565_BLUE;
+static constexpr uint16_t C_BLUE   = TFT_BLUE;
 
 // ========================= Bus helpers =========================
 
@@ -150,23 +133,46 @@ static void acquireForSd() {
 static void lcdHardReset() {
   pinMode(LCD_RST_PIN, OUTPUT);
   digitalWrite(LCD_RST_PIN, HIGH);
-  delay(10);
+  delay(20);
   digitalWrite(LCD_RST_PIN, LOW);
-  delay(30);
+  delay(80);
   digitalWrite(LCD_RST_PIN, HIGH);
-  delay(150);
+  delay(180);
 }
 
 static void lcdWriteMadctlFix() {
   acquireForLcd();
-  lcdBus->beginWrite();
-  lcdBus->writeC8D8(0x36, 0x48);
-  lcdBus->endWrite();
+  tft.writecommand(0x36);
+  tft.writedata(0x48);
+  delay(10);
+}
+
+static void setXIAO147Rotation(uint8_t rotation) {
+  tft.setRotation(rotation);
+
+  if (rotation == 0) {
+    lcdWriteMadctlFix();
+  }
 }
 
 static void setBacklight(uint8_t pwm) {
   pinMode(LCD_BL_PIN, OUTPUT);
+  digitalWrite(LCD_BL_PIN, HIGH);
   analogWrite(LCD_BL_PIN, pwm);
+}
+
+static void preparePins() {
+  pinMode(LCD_CS_PIN, OUTPUT);
+  pinMode(LCD_DC_PIN, OUTPUT);
+  pinMode(LCD_SCK_PIN, OUTPUT);
+  pinMode(LCD_MOSI_PIN, OUTPUT);
+  pinMode(SD_CS_PIN, OUTPUT);
+
+  digitalWrite(LCD_CS_PIN, HIGH);
+  digitalWrite(LCD_DC_PIN, HIGH);
+  digitalWrite(LCD_SCK_PIN, LOW);
+  digitalWrite(LCD_MOSI_PIN, LOW);
+  digitalWrite(SD_CS_PIN, HIGH);
 }
 
 // ========================= Basic UI =========================
@@ -177,83 +183,83 @@ static void printFixed(int x, int y, uint16_t color, const String &s, int chars)
   if ((int)out.length() > chars) out = out.substring(0, chars);
 
   acquireForLcd();
-  gfx->setTextSize(1);
-  gfx->setTextColor(color, C_BLACK);
-  gfx->setCursor(x, y);
-  gfx->print(out);
+  tft.setTextSize(1);
+  tft.setTextColor(color, C_BLACK);
+  tft.setCursor(x, y);
+  tft.print(out);
 }
 
 static void drawNoImageScreen(const char *msg) {
   acquireForLcd();
-  gfx->fillScreen(C_BLACK);
+  tft.fillScreen(C_BLACK);
 
-  gfx->setTextSize(2);
-  gfx->setTextColor(C_GREEN, C_BLACK);
-  gfx->setCursor(8, 16);
-  gfx->print("Hello,XIAO!");
+  tft.setTextSize(2);
+  tft.setTextColor(C_GREEN, C_BLACK);
+  tft.setCursor(8, 16);
+  tft.print("Hello,XIAO!");
 
-  gfx->setTextSize(1);
-  gfx->setTextColor(C_CYAN, C_BLACK);
-  gfx->setCursor(10, 46);
-  gfx->print("1.47 SD BMP Reader");
+  tft.setTextSize(1);
+  tft.setTextColor(C_CYAN, C_BLACK);
+  tft.setCursor(10, 46);
+  tft.print("1.47 SD BMP Reader");
 
-  gfx->drawFastHLine(8, 64, 156, C_GRAY);
+  tft.drawFastHLine(8, 64, 156, C_GRAY);
 
-  gfx->setTextColor(C_YELLOW, C_BLACK);
-  gfx->setCursor(10, 88);
-  gfx->print("Put BMP files in SD root");
+  tft.setTextColor(C_YELLOW, C_BLACK);
+  tft.setCursor(10, 88);
+  tft.print("Put BMP files in SD root");
 
-  gfx->setTextColor(C_WHITE, C_BLACK);
-  gfx->setCursor(10, 112);
-  gfx->print("/test.bmp");
-  gfx->setCursor(10, 128);
-  gfx->print("/image001.bmp");
-  gfx->setCursor(10, 144);
-  gfx->print("/image002.bmp");
+  tft.setTextColor(C_WHITE, C_BLACK);
+  tft.setCursor(10, 112);
+  tft.print("/test.bmp");
+  tft.setCursor(10, 128);
+  tft.print("/image001.bmp");
+  tft.setCursor(10, 144);
+  tft.print("/image002.bmp");
 
-  gfx->setTextColor(C_CYAN, C_BLACK);
-  gfx->setCursor(10, 176);
-  gfx->print("Format:");
-  gfx->setCursor(10, 192);
-  gfx->print("24-bit uncompressed BMP");
-  gfx->setCursor(10, 208);
-  gfx->print("172x320 recommended");
+  tft.setTextColor(C_CYAN, C_BLACK);
+  tft.setCursor(10, 176);
+  tft.print("Format:");
+  tft.setCursor(10, 192);
+  tft.print("24-bit uncompressed BMP");
+  tft.setCursor(10, 208);
+  tft.print("172x320 recommended");
 
-  gfx->setTextColor(C_RED, C_BLACK);
-  gfx->setCursor(10, 250);
-  gfx->print(msg);
+  tft.setTextColor(C_RED, C_BLACK);
+  tft.setCursor(10, 250);
+  tft.print(msg);
 }
 
 static void drawStatusBar(const char *path, bool ok, uint32_t renderMs) {
   acquireForLcd();
 
-  gfx->fillRect(0, 0, LCD_W, 18, C_BLACK);
-  gfx->drawFastHLine(0, 18, LCD_W, ok ? C_GREEN : C_RED);
+  tft.fillRect(0, 0, LCD_W, 18, C_BLACK);
+  tft.drawFastHLine(0, 18, LCD_W, ok ? C_GREEN : C_RED);
 
-  gfx->setTextSize(1);
-  gfx->setTextColor(ok ? C_GREEN : C_RED, C_BLACK);
-  gfx->setCursor(2, 3);
-  gfx->print(ok ? "SD IMG" : "IMG ERR");
+  tft.setTextSize(1);
+  tft.setTextColor(ok ? C_GREEN : C_RED, C_BLACK);
+  tft.setCursor(2, 3);
+  tft.print(ok ? "SD IMG" : "IMG ERR");
 
-  gfx->setTextColor(C_CYAN, C_BLACK);
-  gfx->setCursor(50, 3);
-  gfx->print("#");
-  gfx->print((unsigned long)g_frame);
+  tft.setTextColor(C_CYAN, C_BLACK);
+  tft.setCursor(50, 3);
+  tft.print("#");
+  tft.print((unsigned long)g_frame);
 
-  gfx->setTextColor(C_YELLOW, C_BLACK);
-  gfx->setCursor(100, 3);
-  gfx->print(renderMs);
-  gfx->print("ms");
+  tft.setTextColor(C_YELLOW, C_BLACK);
+  tft.setCursor(100, 3);
+  tft.print(renderMs);
+  tft.print("ms");
 
-  gfx->fillRect(0, LCD_H - 14, LCD_W, 14, C_BLACK);
-  gfx->setTextColor(C_WHITE, C_BLACK);
-  gfx->setCursor(2, LCD_H - 11);
+  tft.fillRect(0, LCD_H - 14, LCD_W, 14, C_BLACK);
+  tft.setTextColor(C_WHITE, C_BLACK);
+  tft.setCursor(2, LCD_H - 11);
 
   String name = String(path);
   int slash = name.lastIndexOf('/');
   if (slash >= 0) name = name.substring(slash + 1);
   if (name.length() > 20) name = name.substring(0, 20);
-  gfx->print(name);
+  tft.print(name);
 }
 
 // ========================= SD init/list =========================
@@ -266,7 +272,7 @@ static bool beginSd() {
 
   for (size_t i = 0; i < sizeof(freqs) / sizeof(freqs[0]); i++) {
     SdSpiConfig cfg(SD_CS_PIN, SHARED_SPI, freqs[i], &SPI);
-    if (SD.begin(cfg)) {
+    if (sdCard.begin(cfg)) {
       g_sdFreq = freqs[i];
       Serial.print("[SD] begin OK freq=");
       Serial.println(g_sdFreq);
@@ -462,7 +468,7 @@ static bool drawBmpFromSd(const char *path) {
   int dstY = srcH < LCD_H ? (LCD_H - srcH) / 2 : 0;
 
   acquireForLcd();
-  gfx->fillScreen(C_BLACK);
+  tft.fillScreen(C_BLACK);
 
   for (int y = 0; y < drawH; y++) {
     int srcY = cropY + y;
@@ -507,7 +513,7 @@ static bool drawBmpFromSd(const char *path) {
     }
 
     acquireForLcd();
-    gfx->draw16bitRGBBitmap(dstX, dstY + y, lineBuf, drawW, 1);
+    tft.pushImage(dstX, dstY + y, drawW, 1, lineBuf);
   }
 
   f.close();
@@ -534,15 +540,13 @@ static bool initLcd() {
   setBacklight(255);
   lcdHardReset();
 
-  if (!gfx->begin()) {
-    Serial.println("[LCD] begin failed");
-    return false;
-  }
-
-  lcdWriteMadctlFix();
+  tft.init();
+  tft.setSwapBytes(true);
+  setXIAO147Rotation(0);
+  tft.invertDisplay(false);
 
   acquireForLcd();
-  gfx->fillScreen(C_BLACK);
+  tft.fillScreen(C_BLACK);
 
   Serial.println("[LCD] OK, RST=D17 corrected");
   return true;
@@ -558,10 +562,7 @@ void setup() {
   Serial.println("=== XIAO nRF52840 Plus 1.47 SD BMP Reader v0.1 ===");
   Serial.println("LCD_RST uses corrected D17 definition. D19 is not used.");
 
-  pinMode(SD_CS_PIN, OUTPUT);
-  digitalWrite(SD_CS_PIN, HIGH);
-  pinMode(LCD_CS_PIN, OUTPUT);
-  digitalWrite(LCD_CS_PIN, HIGH);
+  preparePins();
 
   if (!initLcd()) {
     while (1) delay(1000);
@@ -589,8 +590,8 @@ void loop() {
     static int dir = 1;
 
     acquireForLcd();
-    gfx->fillRect(10, 286, 152, 8, C_BLACK);
-    gfx->fillRect(10 + x, 286, 20, 8, C_CYAN);
+    tft.fillRect(10, 286, 152, 8, C_BLACK);
+    tft.fillRect(10 + x, 286, 20, 8, C_CYAN);
 
     x += dir * 3;
     if (x <= 0 || x >= 132) dir = -dir;
