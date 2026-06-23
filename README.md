@@ -38,11 +38,11 @@ https://github.com/adafruit/Adafruit_TinyUSB_Arduino 或则直接在arduino搜�
 
 9. 无论哪个版本的Squareline，我们的板子若要使用，必须经过一下步骤：
 
-  a. 在squareline vision里画好UI，输出project template文件包
-  b. 解压文件包，其中包括library文件夹和UI Arduino代码文件夹，并复制library中的UI库到Arduino库里
-  c. 复制屏幕driver.h库到UI Arduino 代码文件夹里
-  d. 下载seeed 的GFX库
-  e. 下载seeed lvgl库，并将库里的lv_conf.h文件复制到Arduino下载库路径中
+  - a. 在squareline vision里画好UI，输出project template文件包
+  - b. 解压文件包，其中包括library文件夹和UI Arduino代码文件夹，并复制library中的UI库到Arduino库里
+  - c. 复制屏幕driver.h库到UI Arduino 代码文件夹里
+  - d. 下载seeed 的GFX库
+  - e. 下载seeed lvgl库，并将库里的lv_conf.h文件复制到Arduino下载库路径中
 
 ## Basic examples
 
