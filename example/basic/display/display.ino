@@ -150,6 +150,8 @@ void setup() {
 
   tft.init();
   setXIAO147Rotation(0);
+  // This JD9853A panel requires inversion to be disabled for normal colors.
+  tft.invertDisplay(false);
 
   Serial.print("LCD width: ");
   Serial.println(tft.width());

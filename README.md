@@ -36,6 +36,14 @@ https://github.com/adafruit/Adafruit_TinyUSB_Arduino 或则直接在arduino搜�
 
 8. 如果 1.47 寸屏幕出现黑白互换、红色变青色、绿色变紫色、黄色变蓝色等现象，通常不是 RGB/BGR 或字节序问题，而是 LCD inversion 状态反了。可在 `tft.init()` 和旋转/面板修正后测试 `tft.invertDisplay(false)` 或 `tft.invertDisplay(true)`。
 
+9. 无论哪个版本的Squareline，我们的板子若要使用，必须经过一下步骤：
+
+  a. 在squareline vision里画好UI，输出project template文件包
+  b. 解压文件包，其中包括library文件夹和UI Arduino代码文件夹，并复制library中的UI库到Arduino库里
+  c. 复制屏幕driver.h库到UI Arduino 代码文件夹里
+  d. 下载seeed 的GFX库
+  e. 下载seeed lvgl库，并将库里的lv_conf.h文件复制到Arduino下载库路径中
+
 ## Basic examples
 
 基础示例都放在 `example/basic` 目录下，每个子目录都是一个可以单独打开和烧录的 Arduino sketch，用来快速验证某一个硬件功能。
@@ -49,7 +57,8 @@ https://github.com/adafruit/Adafruit_TinyUSB_Arduino 或则直接在arduino搜�
 | `example/basic/imu_int` | 配置 LSM6DS3 的 D14 中断，用于验证运动唤醒/中断信号。 |
 | `example/basic/mic` | 使用 PDM 麦克风读取音频峰值，串口输出 `peak`，用于确认麦克风采样是否工作。 |
 | `example/basic/sd` | 使用 nRF52 SDK 自带的 SdFat 挂载 SD 卡，并打印根目录文件列表。 |
-| `example/basic/sd_bmp` | 从 SD 卡根目录读取 `/test.bmp` 或第一张 BMP 图片，并显示到 1.47 寸屏幕上。 |
+| `example/basic/sd_image_reader` | 扫描 SD 卡根目录中的图片并通过屏幕轮播；直接显示 16/24/32-bit 未压缩 BMP|
+| `example/basic/sd_unline_record` | 离线录音示例：上电后使用 D0/D1 板载 PDM 麦克风录制 10 秒，将 16 kHz、16-bit、单声道 PCM 保存为 SD 卡中的递增编号 WAV 文件。 |
 | `example/basic/bat` | 读取 VBAT ADC、电池分压使能和充电状态脚，用于检查电池电压和充电状态。 |
 | `example/basic/bat_esp32s3` | ESP32S3 电池读取示例，使用 D16 读取外接 `316k/160k` 分压后的电池电压。 |
 | `example/basic/button` | 读取 USR1 / USR2 按键状态，USR1 会切换背光亮度，USR2 打印按键状态。 |
