@@ -51,6 +51,7 @@ https://github.com/adafruit/Adafruit_TinyUSB_Arduino 或则直接在arduino搜�
 | 目录 | 功能说明 |
 | --- | --- |
 | `example/basic/display` | 使用 Seeed_GFX / `TFT_eSPI` 点亮 1.47 寸屏幕，显示颜色块和文字，用于验证屏幕、背光和显示方向。 |
+| `example/basic/graphictest` | LCD 图形压力测试，会大量调用 `drawLine()` / `drawPixel()` 等小图元写屏；测试时请先拔出 SD 卡，避免插卡冷启动后在 `Lines` 等项目卡住。如需验证 SD + LCD 同时工作，请使用 `example/basic/sd_image_reader`。 |
 | `example/basic/touch` | 使用 AXS5106L 触摸控制器读取触摸坐标，通过串口打印 `x/y` 数据。 |
 | `example/basic/touch_int` | 在触摸读取基础上加入 D7 触摸中断，用于验证触摸 INT 信号是否正常触发。 |
 | `example/basic/imu` | 使用 `Seeed_Arduino_LSM6DS3` 读取加速度计和陀螺仪数据，并通过串口输出。 |
@@ -58,11 +59,11 @@ https://github.com/adafruit/Adafruit_TinyUSB_Arduino 或则直接在arduino搜�
 | `example/basic/mic` | 使用 PDM 麦克风读取音频峰值，串口输出 `peak`，用于确认麦克风采样是否工作。 |
 | `example/basic/sd` | 使用 nRF52 SDK 自带的 SdFat 挂载 SD 卡，并打印根目录文件列表。 |
 | `example/basic/sd_image_reader` | 扫描 SD 卡根目录中的图片并通过屏幕轮播；直接显示 16/24/32-bit 未压缩 BMP|
-| `example/basic/sd_unline_record` | 离线录音示例：上电后使用 D0/D1 板载 PDM 麦克风录制 10 秒，将 16 kHz、16-bit、单声道 PCM 保存为 SD 卡中的递增编号 WAV 文件。 |
+| `example/basic/sd_unline_record` | nRF52840 离线原音录放示例：屏幕显示待机、录音、保存和播放状态；按 USR1 关闭无线活动并启动外部 HFCLK，使用 PDM EasyDMA 双缓冲将 5 秒、16 kHz、16-bit 单声道 PCM 采集到 RAM，再保存为 RAW WAV；按 USR2 通过 MAX98357A/I2S 播放刚录的原音。示例不再做 HP、notch、DSP 或 CSV 统计处理，也不使用 RGB LED 状态提示。5 秒 PCM 占约 160 KB，适配 nRF52840 的 256 KB RAM。 |
 | `example/basic/bat` | 读取 VBAT ADC、电池分压使能和充电状态脚，用于检查电池电压和充电状态。 |
 | `example/basic/bat_esp32s3` | ESP32S3 电池读取示例，使用 D16 读取外接 `316k/160k` 分压后的电池电压。 |
 | `example/basic/button` | 读取 USR1 / USR2 按键状态，USR1 会切换背光亮度，USR2 打印按键状态。 |
-| `example/basic/i2s` | 使用预留 I2S 音频输出引脚 `SD=D11`、`SCK=D12`、`WS=D13` 启动 nRF52840 I2S TX 骨架。 （未测试）|
+| `example/basic/i2s` | nRF52840 I2S + MAX98357A 喇叭测试示例：`D11=DIN`、`D12=BCLK`、`D13=LRC/WS`，按 USR1 播放约 1 秒低音量测试音。MAX98357A 不接 MCLK，但 nRF I2S master 需启用内部 MCK 发生器。 |
 
 ## Application
 
