@@ -162,7 +162,7 @@ Display-Gadgets/
 
 ## Wiki
 
-面向用户的文档发布在 [Seeed Studio Wiki](https://wiki.seeedstudio.com/)。请在 **Sensor → LCD Displays → Display Gadgets** 下查看。
+面向用户的文档发布在 [Seeed Studio Wiki](https://wiki.seeedstudio.com/)。请在 **Sensing → LCD Displays → Display Gadgets** 下查看。
 
 ## 相关仓库
 

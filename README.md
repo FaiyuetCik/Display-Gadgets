@@ -162,7 +162,7 @@ Standalone single-feature demos under `code/Function/`. Each is a self-contained
 
 ## Wiki
 
-User-facing documentation is published on the [Seeed Studio Wiki](https://wiki.seeedstudio.com/). Look under **Sensor → LCD Displays → Display Gadgets**.
+User-facing documentation is published on the [Seeed Studio Wiki](https://wiki.seeedstudio.com/). Look under **Sensing → LCD Displays → Display Gadgets**.
 
 ## Related Repositories
 
