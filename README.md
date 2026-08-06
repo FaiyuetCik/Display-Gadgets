@@ -1,3 +1,5 @@
+**Language: [English](./README.md) | [简体中文](./README_CN.md)**
+
 # XIAO Display Gadgets
 
 Hardware documentation, drivers, factory firmware, and demo code for the **XIAO Display Series** — six display boards in three sizes (1.47", 1.14", 0.96"), each powered by XIAO nRF52840 Plus or XIAO ESP32-S3 Plus.
