@@ -150,9 +150,9 @@ static void drawWaveform(const int16_t* samples, int count) {
 
     // Colour by amplitude
     uint16_t color;
-    if (val > 24000)       color = TFT_RED;
-    else if (val > 14000)  color = TFT_YELLOW;
-    else if (val > 6000)   color = TFT_GREEN;
+    if (val > 1200)        color = TFT_RED;
+    else if (val > 750)    color = TFT_YELLOW;
+    else if (val > 300)    color = TFT_GREEN;
     else                   color = tft.color565(0, 100, 0);
 
     // Symmetric bar around baseline
