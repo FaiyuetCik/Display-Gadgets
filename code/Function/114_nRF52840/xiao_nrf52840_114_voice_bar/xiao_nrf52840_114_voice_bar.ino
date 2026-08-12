@@ -129,12 +129,19 @@ static int segTop(int idx) {
 
 // ========================= Draw waveform =========================
 
-static void drawWaveform(const int16_t* samples, int count) {
+static void drawWaveform(const int16_t* samples, int count, float vol) {
   // Clear the waveform band
   tft.fillRect(0, WF_Y, LCD_W, WF_H, TFT_BLACK);
 
   // Subtle center baseline
   tft.drawFastHLine(0, WF_BASELINE, LCD_W, tft.color565(45, 45, 45));
+
+  // Color from smoothed volume (aligned with volume bar & label)
+  uint16_t color;
+  if (vol > 0.90f)       color = TFT_RED;
+  else if (vol > 0.50f)  color = TFT_YELLOW;
+  else if (vol > 0.10f)  color = TFT_GREEN;
+  else                   color = tft.color565(0, 100, 0);
 
   int barW  = LCD_W / count;
   int gap   = max(1, barW / 5);
@@ -148,14 +155,7 @@ static void drawWaveform(const int16_t* samples, int count) {
 
     int x = i * barW;
 
-    // Colour by amplitude (aligned with volume bar: 50%→750, 90%→1350)
-    uint16_t color;
-    if (val > 1350)        color = TFT_RED;
-    else if (val > 750)    color = TFT_YELLOW;
-    else if (val > 150)    color = TFT_GREEN;
-    else                   color = tft.color565(0, 100, 0);
-
-    // Symmetric bar around baseline
+    // Symmetric bar around baseline — all bars share the same smoothed color
     tft.fillRect(x, WF_BASELINE - h, drawW, h * 2, color);
   }
 }
@@ -302,7 +302,7 @@ void loop() {
 
   // --- Draw ---
   if (hasWf) {
-    drawWaveform(wfCopy, WF_BARS);
+    drawWaveform(wfCopy, WF_BARS, g_vol);
   }
   drawBar(g_vol);
   drawLabel(g_vol);
