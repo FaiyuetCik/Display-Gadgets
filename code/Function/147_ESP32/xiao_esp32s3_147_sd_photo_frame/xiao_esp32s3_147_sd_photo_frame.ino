@@ -31,6 +31,7 @@
 #include <SPI.h>
 #include <SdFat.h>
 #include <TFT_eSPI.h>
+#include <cstring>
 
 // ========================= Pin map =========================
 
@@ -53,6 +54,7 @@ TFT_eSPI tft;
 // ========================= SD card =========================
 
 SdFat sdCard;
+static uint32_t g_sdFreq = 400000;  // stored after successful mount
 
 // SD frequencies are tried low-to-high in beginSd().
 
@@ -86,18 +88,18 @@ static constexpr uint16_t C_GRAY   = 0x8410;
 // may be active at a time.  These helpers assert both CS pins high
 // before pulling the correct one low, avoiding bus contention.
 
+// IMPORTANT: Do NOT call pinMode() here!  On ESP32-S3, pinMode() can
+// disconnect the pin from the SPI controller (e.g. GPIO6 = FSPICS1),
+// breaking SdFat's CS control.  Pins are already set to OUTPUT in
+// preparePins() during startup.  We ONLY deselect via digitalWrite(HIGH).
 static void acquireForLcd() {
-  pinMode(SD_CS_PIN, OUTPUT);
   digitalWrite(SD_CS_PIN, HIGH);
-  pinMode(LCD_CS_PIN, OUTPUT);
   digitalWrite(LCD_CS_PIN, HIGH);
   delayMicroseconds(2);
 }
 
 static void acquireForSd() {
-  pinMode(LCD_CS_PIN, OUTPUT);
   digitalWrite(LCD_CS_PIN, HIGH);
-  pinMode(SD_CS_PIN, OUTPUT);
   digitalWrite(SD_CS_PIN, HIGH);
   delayMicroseconds(2);
 }
@@ -170,7 +172,7 @@ static void showMessage(const char *title, const String &line1,
 }
 
 static void drawStatusBar(const char *path, bool ok, uint32_t renderMs) {
-  acquireForLcd();
+  SPI.beginTransaction(SPISettings(40000000, MSBFIRST, SPI_MODE0));
   tft.fillRect(0, 0, LCD_W, 18, C_BLACK);
   tft.drawFastHLine(0, 18, LCD_W, ok ? C_GREEN : C_RED);
   tft.setTextSize(1);
@@ -192,36 +194,64 @@ static void drawStatusBar(const char *path, bool ok, uint32_t renderMs) {
   if (slash >= 0) name = name.substring(slash + 1);
   if (name.length() > 20) name = name.substring(0, 20);
   tft.print(name);
+  SPI.endTransaction();
 }
 
 // ========================= SD card =========================
 
 static bool beginSd() {
+  Serial.println("[SD] acquireForSd()...");
   acquireForSd();
 
-  // Let Arduino SPI object start the bus. On ESP32, if TFT_eSPI already
-  // started it this is a no-op; on nRF52840 it re-initialises cleanly.
+  Serial.println("[SD] SPI.begin()...");
   SPI.begin();
+  Serial.println("[SD] SPI.begin() done");
 
-  // Use DEDICATED_SPI — on ESP32-S3, SHARED_SPI deadlocks during file
-  // reads.  DEDICATED_SPI bypasses the mutex; CS pins keep the two
-  // devices isolated.
+  // Print pin states for debugging
+  Serial.print("[SD] SD_CS_PIN(D6)=");
+  Serial.print(SD_CS_PIN);
+  Serial.print("  LCD_CS_PIN(D2)=");
+  Serial.print(LCD_CS_PIN);
+  Serial.print("  MISO=D9  MOSI=D10  SCK=D8");
+  Serial.println();
+
+  // Dump SD_CS pin value
+  pinMode(SD_CS_PIN, INPUT);
+  int sdCsState = digitalRead(SD_CS_PIN);
+  Serial.print("[SD] SD_CS pin state (before begin): ");
+  Serial.println(sdCsState);
+
+  // Try SHARED_SPI — DEDICATED_SPI on ESP32-S3 hangs during f.read()
+  // for unknown driver-level reasons. SHARED_SPI uses proper SPI
+  // transactions, which should work since TFT_eSPI has
+  // SUPPORT_TRANSACTIONS=0 (no mutex contention).
   const uint32_t freqs[] = {400000, 1000000, 4000000, 8000000};
   for (size_t i = 0; i < sizeof(freqs) / sizeof(freqs[0]); ++i) {
-    SdSpiConfig cfg(SD_CS_PIN, DEDICATED_SPI, freqs[i], &SPI);
+    SdSpiConfig cfg(SD_CS_PIN, SHARED_SPI, freqs[i], &SPI);
     Serial.print("[SD] trying ");
     Serial.print(freqs[i]);
-    Serial.println(" Hz...");
+    Serial.print(" Hz (");
+    Serial.print(i+1);
+    Serial.print("/");
+    Serial.print(sizeof(freqs)/sizeof(freqs[0]));
+    Serial.print(")... ");
 
-    if (sdCard.begin(cfg)) {
-      Serial.print("[SD] mounted @ ");
+    // Try to begin — if this hangs, we'll at least know which freq
+    bool ok = sdCard.begin(cfg);
+
+    if (ok) {
+      Serial.print("OK! mounted @ ");
       Serial.print(freqs[i]);
       Serial.println(" Hz");
+      g_sdFreq = freqs[i];   // remember for later acquireForSd()
       return true;
+    } else {
+      Serial.println("FAILED");
     }
     delay(30);
   }
 
+  Serial.println("[SD] All frequencies failed.");
   return false;
 }
 
@@ -281,6 +311,7 @@ static uint16_t rgb888To565(uint8_t r, uint8_t g, uint8_t b) {
 
 static bool drawBmp(const char *path) {
   Serial.println("[BMP] opening file...");
+  acquireForSd();   // switch SPI bus to SD before reading file
   File32 f;
   if (!f.open(path, O_RDONLY)) {
     Serial.print("[BMP] open failed: ");
@@ -288,22 +319,52 @@ static bool drawBmp(const char *path) {
     return false;
   }
   Serial.println("[BMP] file opened OK");
+  Serial.print("[BMP] file size: ");
+  Serial.println(f.size());
 
   uint32_t t0 = millis();
 
   // --- Read BMP header ---
   Serial.println("[BMP] reading header...");
-  if (readLE16(f) != 0x4D42) {       // "BM" signature
-    Serial.println("[BMP] not a BM file");
+  f.seekSet(0);  // ensure we're at the start of the file
+  Serial.println("[BMP] seekSet(0) done, now reading...");
+  // Read BMP header — inline reads instead of readLE16/readLE32
+  // (workaround for SdFat File32::read() hang when called through helper funcs)
+  uint32_t dataOffset, headerSize, compression;
+  int32_t  srcW, srcHRaw;
+  uint16_t planes, bpp;
+  uint8_t  hdr_b[4];
+  int n;
+
+  // "BM" signature
+  n = f.read(hdr_b, 2);
+  // Compare bytes directly to avoid any integer-promotion / shift bugs.
+  if (n != 2 || hdr_b[0] != 0x42 || hdr_b[1] != 0x4D) {
+    Serial.print("[BMP] not a BM file (n=");
+    Serial.print(n);
+    Serial.print(" b0=0x");
+    Serial.print(hdr_b[0], HEX);
+    Serial.print(" b1=0x");
+    Serial.print(hdr_b[1], HEX);
+    Serial.println(")");
     f.close();
     return false;
   }
+  Serial.println("[BMP] BM signature OK");
 
-  (void)readLE32(f);                  // file size
-  (void)readLE16(f);                  // reserved 1
-  (void)readLE16(f);                  // reserved 2
-  uint32_t dataOffset = readLE32(f);
-  uint32_t headerSize = readLE32(f);
+  // file size (skip) + reserved 1+2 (skip)
+  n = f.read(hdr_b, 4);
+  n = f.read(hdr_b, 4);
+
+  // data offset
+  n = f.read(hdr_b, 4);
+  dataOffset = (uint32_t)hdr_b[0] | ((uint32_t)hdr_b[1] << 8) |
+               ((uint32_t)hdr_b[2] << 16) | ((uint32_t)hdr_b[3] << 24);
+
+  // header size
+  n = f.read(hdr_b, 4);
+  headerSize = (uint32_t)hdr_b[0] | ((uint32_t)hdr_b[1] << 8) |
+               ((uint32_t)hdr_b[2] << 16) | ((uint32_t)hdr_b[3] << 24);
 
   if (headerSize < 40) {
     Serial.println("[BMP] unsupported header size");
@@ -311,11 +372,24 @@ static bool drawBmp(const char *path) {
     return false;
   }
 
-  int32_t  srcW        = (int32_t)readLE32(f);
-  int32_t  srcHRaw     = (int32_t)readLE32(f);
-  uint16_t planes      = readLE16(f);
-  uint16_t bpp         = readLE16(f);
-  uint32_t compression = readLE32(f);
+  // width, height
+  n = f.read(hdr_b, 4);
+  srcW = (int32_t)((uint32_t)hdr_b[0] | ((uint32_t)hdr_b[1] << 8) |
+                   ((uint32_t)hdr_b[2] << 16) | ((uint32_t)hdr_b[3] << 24));
+  n = f.read(hdr_b, 4);
+  srcHRaw = (int32_t)((uint32_t)hdr_b[0] | ((uint32_t)hdr_b[1] << 8) |
+                      ((uint32_t)hdr_b[2] << 16) | ((uint32_t)hdr_b[3] << 24));
+
+  // planes + bpp
+  n = f.read(hdr_b, 2);
+  planes = (uint16_t)hdr_b[0] | ((uint16_t)hdr_b[1] << 8);
+  n = f.read(hdr_b, 2);
+  bpp = (uint16_t)hdr_b[0] | ((uint16_t)hdr_b[1] << 8);
+
+  // compression
+  n = f.read(hdr_b, 4);
+  compression = (uint32_t)hdr_b[0] | ((uint32_t)hdr_b[1] << 8) |
+                ((uint32_t)hdr_b[2] << 16) | ((uint32_t)hdr_b[3] << 24);
 
   if (planes != 1 || compression != 0) {
     Serial.println("[BMP] only uncompressed BMP supported");
@@ -333,6 +407,14 @@ static bool drawBmp(const char *path) {
   bool topDown = (srcHRaw < 0);
   int32_t srcH = topDown ? -srcHRaw : srcHRaw;
 
+  Serial.print("[BMP] ");
+  Serial.print(srcW);
+  Serial.print("x");
+  Serial.print(srcH);
+  Serial.print(" bpp=");
+  Serial.print(bpp);
+  Serial.println(" header OK");
+
   if (srcW <= 0 || srcH <= 0 || srcW > BMP_MAX_SRC_W) {
     Serial.print("[BMP] bad size: ");
     Serial.print(srcW);
@@ -343,6 +425,8 @@ static bool drawBmp(const char *path) {
   }
 
   uint32_t rowSize = ((uint32_t)srcW * bpp + 31) / 32 * 4;
+  Serial.print("[BMP] dataOffset="); Serial.print(dataOffset);
+  Serial.print(" rowSize="); Serial.println(rowSize);
   if (rowSize > sizeof(rowBuf)) {
     Serial.println("[BMP] row buffer overflow");
     f.close();
@@ -357,13 +441,11 @@ static bool drawBmp(const char *path) {
   int dstX  = (srcW < LCD_W) ? (LCD_W - srcW) / 2 : 0;
   int dstY  = (srcH < LCD_H) ? (LCD_H - srcH) / 2 : 0;
 
-  // Manually restore SPI config for the display.  With SUPPORT_TRANSACTIONS
-  // disabled TFT_eSPI won't call SPI.beginTransaction(), so we must ensure
-  // the bus is at the right speed / mode ourselves.
-  acquireForLcd();
-  SPI.setFrequency(40000000);
-  SPI.setDataMode(SPI_MODE0);
+  Serial.println("[BMP] fillScreen BLACK...");
+  SPI.beginTransaction(SPISettings(40000000, MSBFIRST, SPI_MODE0));
   tft.fillScreen(C_BLACK);
+  SPI.endTransaction();
+  Serial.println("[BMP] fillScreen done, starting row loop");
 
   // --- Draw row by row ---
   for (int y = 0; y < drawH; y++) {
@@ -371,17 +453,25 @@ static bool drawBmp(const char *path) {
     int fileY = topDown ? srcY : (srcH - 1 - srcY);
     uint32_t rowOffset = dataOffset + (uint32_t)fileY * rowSize;
 
-    if (!f.seekSet(rowOffset)) {
-      Serial.println("[BMP] seek failed");
-      f.close();
-      return false;
+    if (y == 0) {
+      Serial.print("[BMP] row 0: fileY="); Serial.print(fileY);
+      Serial.print(" rowOffset="); Serial.println(rowOffset);
     }
 
-    if (f.read(rowBuf, rowSize) != (int)rowSize) {
-      Serial.println("[BMP] row read failed");
+    acquireForSd();   // switch SPI back to SD before reading row data
+    if (y == 0) Serial.println("[BMP] seekSet...");
+    if (!f.seekSet(rowOffset)) {
+      Serial.print("[BMP] seek failed at row "); Serial.println(y);
       f.close();
       return false;
     }
+    if (y == 0) Serial.println("[BMP] seekSet OK, reading row...");
+    if (f.read(rowBuf, rowSize) != (int)rowSize) {
+      Serial.print("[BMP] row read failed at row "); Serial.println(y);
+      f.close();
+      return false;
+    }
+    if (y == 0) Serial.println("[BMP] row read OK, converting pixels...");
 
     // Convert one row from BMP pixel format to RGB565.
     for (int x = 0; x < drawW; x++) {
@@ -405,12 +495,12 @@ static bool drawBmp(const char *path) {
       }
     }
 
-    acquireForLcd();
-    SPI.setFrequency(40000000);
-    SPI.setDataMode(SPI_MODE0);
+    SPI.beginTransaction(SPISettings(40000000, MSBFIRST, SPI_MODE0));
     tft.pushImage(dstX, dstY + y, drawW, 1, lineBuf);
+    SPI.endTransaction();
   }
 
+  Serial.println("[BMP] row loop complete");
   f.close();
   Serial.println("[BMP] file closed, drawing status bar...");
 
@@ -440,30 +530,147 @@ void setup() {
 
   Serial.println();
   Serial.println("=== XIAO ESP32-S3 Plus 1.47 SD Photo Frame ===");
+  Serial.print("[SETUP] Chip: ");
+  Serial.println(ESP.getChipModel());
+  Serial.print("[SETUP] Flash size: ");
+  Serial.print(ESP.getFlashChipSize() / 1024 / 1024);
+  Serial.println(" MB");
+  Serial.print("[SETUP] PSRAM: ");
+  Serial.print(ESP.getPsramSize() / 1024 / 1024);
+  Serial.println(" MB");
 
+  Serial.println("[SETUP] Step 1/6: preparePins()...");
   preparePins();
-  initLcd();
-  showMessage("SD Photo Frame", "Mounting SD card...");
+  Serial.println("[SETUP] Step 1/6: done");
 
+  Serial.println("[SETUP] Step 2/6: initLcd()...");
+  initLcd();
+  Serial.println("[SETUP] Step 2/6: done");
+
+  Serial.println("[SETUP] Step 3/6: showMessage()...");
+  showMessage("SD Photo Frame", "Mounting SD card...");
+  Serial.println("[SETUP] Step 3/6: done");
+
+  Serial.println("[SETUP] Step 4/6: beginSd()...");
   if (!beginSd()) {
+    Serial.println("[SETUP] Step 4/6: FAILED - SD card mount failed");
     showMessage("SD Photo Frame", "SD card mount failed",
                 "Insert FAT32 card with BMP files");
     while (1) delay(1000);
   }
+  Serial.println("[SETUP] Step 4/6: done - SD mounted OK");
 
+  Serial.println("[SETUP] Step 5/6: scanImages()...");
   scanImages();
+  Serial.println("[SETUP] Step 5/6: done");
 
+  // === RAW SECTOR READ TEST ===
+  // Bypass the FAT layer entirely — test if low-level SPI reads work.
+  Serial.println("[TEST] Raw sector read test (bypassing FAT)...");
+  uint8_t rawBuf[512];
+  memset(rawBuf, 0, 512);
+  uint32_t testSectors[] = {0, 1, 100, 1000};
+  for (int ti = 0; ti < 4; ti++) {
+    Serial.printf("[TEST]   reading sector %u... ", testSectors[ti]);
+    if (sdCard.card()->readSector(testSectors[ti], rawBuf)) {
+      Serial.printf("OK (first byte: 0x%02X)\n", rawBuf[0]);
+    } else {
+      Serial.println("FAILED");
+    }
+  }
+  Serial.println("[TEST] Raw sector test complete");
+  // === END RAW SECTOR TEST ===
+
+  // === FILE READ TEST ===
+  // Now test if File32::read() works on a specific file.
+  // === PRECISE REPLICATION of drawBmp's readLE16 ===
+  // Same file, same read size, same seekSet(0) before read.
+  Serial.println("[TEST] Replicating drawBmp readLE16 exactly...");
+  {
+    acquireForSd();  // exactly what drawBmp does
+    File32 testFile;
+    Serial.println("[TEST]   opening /Atest.bmp...");
+    if (testFile.open("/Atest.bmp", O_RDONLY)) {
+      Serial.print("[TEST]   size=");
+      Serial.print(testFile.size());
+      Serial.print(" avail=");
+      Serial.println(testFile.available());
+
+      Serial.println("[TEST]   seekSet(0)...");
+      testFile.seekSet(0);
+      Serial.println("[TEST]   seekSet(0) done");
+
+      Serial.println("[TEST]   reading 2 bytes (like readLE16)...");
+      uint8_t b[2];
+      int n = testFile.read(b, 2);
+      Serial.print("[TEST]   read returned: ");
+      Serial.print(n);
+      Serial.print(" bytes: 0x");
+      Serial.print(b[0], HEX);
+      Serial.print(" 0x");
+      Serial.println(b[1], HEX);
+
+      testFile.close();
+    } else {
+      Serial.println("[TEST]   open FAILED");
+    }
+  }
+  Serial.println("[TEST] Replication test complete");
+  // === END FILE READ TEST ===
+
+  // === DIRECTORY-ENTRY READ TEST ===
+  // Same approach as scanImages — open via root directory, then read.
+  Serial.println("[TEST] Dir-entry read test...");
+  File32 root2;
+  if (root2.open("/")) {
+    File32 entry;
+    while (entry.openNext(&root2, O_RDONLY)) {
+      char name[64];
+      entry.getName(name, sizeof(name));
+      if (strstr(name, ".bmp") || strstr(name, ".BMP")) {
+        Serial.print("[TEST]   found via dir: ");
+        Serial.println(name);
+        Serial.print("[TEST]   size=");
+        Serial.print(entry.size());
+        Serial.print(" avail=");
+        Serial.println(entry.available());
+        uint8_t b;
+        Serial.println("[TEST]   calling read(&b,1)...");
+        int n = entry.read(&b, 1);
+        Serial.print("[TEST]   read returned: ");
+        Serial.println(n);
+        entry.close();
+        break;  // just test first file
+      }
+      entry.close();
+    }
+    root2.close();
+  }
+  Serial.println("[TEST] Dir-entry read test complete");
+  // === END DIRECTORY-ENTRY READ TEST ===
+
+  Serial.println("[SETUP] Step 6/6: check results...");
   if (g_imageCount == 0) {
     showMessage("SD Photo Frame", "No BMP files found",
                 "Put 24-bit BMP images in SD root");
+    Serial.println("[SETUP] No BMP files found");
   } else {
     Serial.print("[IMG] found ");
     Serial.print(g_imageCount);
     Serial.println(" images");
   }
+  // === TEST: Call drawBmp from setup() to see if it works here ===
+  if (g_imageCount > 0) {
+    Serial.println("[SETUP] Testing drawBmp() from setup()...");
+    bool ok = drawBmp(g_imagePaths[0]);
+    Serial.print("[SETUP] drawBmp() from setup returned: ");
+    Serial.println(ok ? "TRUE" : "FALSE");
+  }
+  Serial.println("[SETUP] Setup() complete, entering loop()");
 }
 
 void loop() {
+  Serial.println("[LOOP] loop() iteration start");
   if (g_imageCount == 0) {
     delay(1000);
     return;
