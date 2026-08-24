@@ -1,8 +1,8 @@
 /*
   XIAO ESP32-S3 Plus 0.96 Inch Display graphic test.
 
-  This sketch uses the same Seeed_GFX / TFT_eSPI setup as
-  example/basic/xiao_esp32s3_096_display, then runs a compact graphics benchmark:
+  This sketch uses the verified Arduino_GFX setup from the 0.96-inch
+  factory dashboard, then runs a compact graphics benchmark:
     - color bars
     - lines
     - rectangles
@@ -13,15 +13,11 @@
     - pixel gradient
 
   Required libraries:
-    - Seeed_GFX / TFT_eSPI
+    - GFX Library for Arduino (Arduino_GFX)
 */
 
 #include <Arduino.h>
-#include "driver.h"
-#include <SPI.h>
-#include <TFT_eSPI.h>
-
-TFT_eSPI tft;
+#include <Arduino_GFX_Library.h>
 
 static constexpr uint8_t LCD_CS_PIN   = D2;
 static constexpr uint8_t LCD_DC_PIN   = D3;
@@ -30,19 +26,35 @@ static constexpr uint8_t LCD_MOSI_PIN = D10;
 static constexpr uint8_t LCD_RST_PIN  = D17;
 static constexpr uint8_t LCD_BL_PIN   = D18;
 
+static constexpr int  LCD_W = 80;
+static constexpr int  LCD_H = 160;
+static constexpr int  LCD_ROTATION = 2;
+static constexpr bool LCD_IPS = true;
+static constexpr int  LCD_COL_OFFSET_1 = 24;
+static constexpr int  LCD_ROW_OFFSET_1 = 0;
+static constexpr int  LCD_COL_OFFSET_2 = 24;
+static constexpr int  LCD_ROW_OFFSET_2 = 0;
+
+Arduino_DataBus *lcdBus = new Arduino_ESP32SPI(
+  LCD_DC_PIN, LCD_CS_PIN, LCD_SCK_PIN, LCD_MOSI_PIN
+);
+Arduino_GFX *gfx = new Arduino_ST7789(
+  lcdBus, LCD_RST_PIN, LCD_ROTATION, LCD_IPS, LCD_W, LCD_H,
+  LCD_COL_OFFSET_1, LCD_ROW_OFFSET_1, LCD_COL_OFFSET_2, LCD_ROW_OFFSET_2
+);
+Arduino_GFX &tft = *gfx;
+
+static constexpr uint16_t TFT_BLACK    = RGB565_BLACK;
+static constexpr uint16_t TFT_WHITE    = RGB565_WHITE;
+static constexpr uint16_t TFT_RED      = RGB565_RED;
+static constexpr uint16_t TFT_GREEN    = RGB565_LIGHTGREEN;
+static constexpr uint16_t TFT_BLUE     = RGB565_BLUE;
+static constexpr uint16_t TFT_CYAN     = RGB565_CYAN;
+static constexpr uint16_t TFT_MAGENTA  = RGB565_MAGENTA;
+static constexpr uint16_t TFT_YELLOW   = RGB565_YELLOW;
+static constexpr uint16_t TFT_DARKGREY = RGB565_DARKGREY;
+
 // ── Display init ──────────────────────────────────────────────────
-
-static void preparePins() {
-  pinMode(LCD_CS_PIN, OUTPUT);
-  pinMode(LCD_DC_PIN, OUTPUT);
-  pinMode(LCD_SCK_PIN, OUTPUT);
-  pinMode(LCD_MOSI_PIN, OUTPUT);
-
-  digitalWrite(LCD_CS_PIN, HIGH);
-  digitalWrite(LCD_DC_PIN, HIGH);
-  digitalWrite(LCD_SCK_PIN, LOW);
-  digitalWrite(LCD_MOSI_PIN, LOW);
-}
 
 static void forceBacklightOn() {
   pinMode(LCD_BL_PIN, OUTPUT);
@@ -50,23 +62,13 @@ static void forceBacklightOn() {
   analogWrite(LCD_BL_PIN, 255);
 }
 
-static void hardResetPanel() {
-  pinMode(LCD_RST_PIN, OUTPUT);
-  digitalWrite(LCD_RST_PIN, HIGH);
-  delay(20);
-  digitalWrite(LCD_RST_PIN, LOW);
-  delay(80);
-  digitalWrite(LCD_RST_PIN, HIGH);
-  delay(180);
-}
-
 static void initDisplay() {
-  preparePins();
   forceBacklightOn();
-  hardResetPanel();
 
-  tft.init();
-  tft.setRotation(0);
+  if (!tft.begin(40000000)) {
+    Serial.println("[LCD] Arduino_GFX begin failed");
+  }
+  tft.setRotation(LCD_ROTATION);
   tft.invertDisplay(true);
   tft.fillScreen(TFT_BLACK);
 }
@@ -81,13 +83,21 @@ static uint16_t colorWheel(uint8_t pos) {
   return tft.color565(pos * 3, 255 - pos * 3, 0);
 }
 
+static void drawCenteredText(const char *text, int16_t centerX, int16_t centerY, uint8_t size) {
+  int16_t x1, y1;
+  uint16_t w, h;
+  tft.setTextSize(size);
+  tft.getTextBounds(text, 0, 0, &x1, &y1, &w, &h);
+  tft.setCursor(centerX - (int16_t)w / 2, centerY - (int16_t)h / 2);
+  tft.print(text);
+}
+
 static void showTitle(const char *title) {
   tft.fillScreen(TFT_BLACK);
-  tft.setTextDatum(MC_DATUM);
   tft.setTextColor(TFT_CYAN, TFT_BLACK);
-  tft.drawString(title, tft.width() / 2, 60, 2);
+  drawCenteredText(title, tft.width() / 2, 60, 2);
   tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
-  tft.drawString("ESP32-S3 + 0.96", tft.width() / 2, 84, 1);
+  drawCenteredText("ESP32-S3 + 0.96", tft.width() / 2, 84, 1);
   delay(650);
 }
 
@@ -184,14 +194,18 @@ static unsigned long testRoundRects() {
 static unsigned long testText() {
   unsigned long start = micros();
   tft.fillScreen(TFT_BLACK);
-  tft.setTextDatum(TL_DATUM);
 
   tft.setTextColor(TFT_GREEN, TFT_BLACK);
-  tft.drawString("Graphic", 6, 8, 2);
+  tft.setTextSize(2);
+  tft.setCursor(6, 8);
+  tft.print("Graphic");
   tft.setTextColor(TFT_CYAN, TFT_BLACK);
-  tft.drawString("80 x 160 TFT", 6, 28, 1);
+  tft.setTextSize(1);
+  tft.setCursor(6, 28);
+  tft.print("80 x 160 TFT");
   tft.setTextColor(TFT_YELLOW, TFT_BLACK);
-  tft.drawString("TFT_eSPI", 6, 42, 1);
+  tft.setCursor(6, 42);
+  tft.print("Arduino_GFX");
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
   for (int i = 0; i < 5; ++i) {
     tft.setCursor(6, 58 + i * 16);
@@ -224,13 +238,12 @@ static void printResult(const char *name, unsigned long us) {
 
 static void showResultScreen() {
   tft.fillScreen(TFT_BLACK);
-  tft.setTextDatum(MC_DATUM);
   tft.setTextColor(TFT_GREEN, TFT_BLACK);
-  tft.drawString("Done!", tft.width() / 2, 54, 2);
+  drawCenteredText("Done!", tft.width() / 2, 54, 2);
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  tft.drawString("All tests OK", tft.width() / 2, 76, 1);
+  drawCenteredText("All tests OK", tft.width() / 2, 76, 1);
   tft.setTextColor(TFT_CYAN, TFT_BLACK);
-  tft.drawString("RST to rerun", tft.width() / 2, 96, 1);
+  drawCenteredText("RST to rerun", tft.width() / 2, 96, 1);
   tft.drawRoundRect(4, 4, tft.width() - 8, tft.height() - 8, 4, TFT_BLUE);
 }
 

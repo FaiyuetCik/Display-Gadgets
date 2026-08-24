@@ -12,13 +12,11 @@
     BAT ADC = D16    LCD RST = D17    LCD BL  = D18
 
   Required libraries:
-    - Seeed_GFX / TFT_eSPI
+    - GFX Library for Arduino (Arduino_GFX)
 */
 
 #include <Arduino.h>
-#include "driver.h"
-#include <SPI.h>
-#include <TFT_eSPI.h>
+#include <Arduino_GFX_Library.h>
 #include <Wire.h>
 #include "esp_sleep.h"
 #include "driver/gpio.h"
@@ -31,6 +29,15 @@ static constexpr uint8_t LCD_SCK_PIN  = D8;
 static constexpr uint8_t LCD_MOSI_PIN = D10;
 static constexpr uint8_t LCD_RST_PIN  = D17;
 static constexpr uint8_t LCD_BL_PIN   = D18;
+
+static constexpr int  LCD_W = 80;
+static constexpr int  LCD_H = 160;
+static constexpr int  LCD_ROTATION = 2;
+static constexpr bool LCD_IPS = true;
+static constexpr int  LCD_COL_OFFSET_1 = 24;
+static constexpr int  LCD_ROW_OFFSET_1 = 0;
+static constexpr int  LCD_COL_OFFSET_2 = 24;
+static constexpr int  LCD_ROW_OFFSET_2 = 0;
 
 static constexpr uint8_t I2C_SDA_PIN  = D4;
 static constexpr uint8_t I2C_SCL_PIN  = D5;
@@ -57,13 +64,31 @@ static constexpr uint32_t AUTO_SLEEP_MS       = 8000;
 static constexpr uint32_t UI_REFRESH_MS       = 250;
 static constexpr uint32_t BAT_REFRESH_MS      = 1000;
 static constexpr uint32_t WAKE_LOCK_MS        = 1200;
+// Native USB CDC can disconnect while the ESP32-S3 is in light sleep.
+// Keep this false for serial-monitor testing; set true for low-power testing.
+static constexpr bool     ENABLE_LIGHT_SLEEP  = false;
 static constexpr uint8_t  BACKLIGHT_AWAKE_PWM = 160;
 static constexpr uint8_t  BACKLIGHT_SLEEP_PWM = 0;
 static constexpr float    BAT_DIVIDER_RATIO   = (316.0f + 160.0f) / 160.0f;
 
 // ── Display ────────────────────────────────────────────────────────
 
-TFT_eSPI tft;
+Arduino_DataBus *lcdBus = new Arduino_ESP32SPI(
+  LCD_DC_PIN, LCD_CS_PIN, LCD_SCK_PIN, LCD_MOSI_PIN
+);
+Arduino_GFX *gfx = new Arduino_ST7789(
+  lcdBus, LCD_RST_PIN, LCD_ROTATION, LCD_IPS, LCD_W, LCD_H,
+  LCD_COL_OFFSET_1, LCD_ROW_OFFSET_1, LCD_COL_OFFSET_2, LCD_ROW_OFFSET_2
+);
+Arduino_GFX &tft = *gfx;
+
+static constexpr uint16_t TFT_BLACK    = RGB565_BLACK;
+static constexpr uint16_t TFT_WHITE    = RGB565_WHITE;
+static constexpr uint16_t TFT_RED      = RGB565_RED;
+static constexpr uint16_t TFT_GREEN    = RGB565_LIGHTGREEN;
+static constexpr uint16_t TFT_CYAN     = RGB565_CYAN;
+static constexpr uint16_t TFT_YELLOW   = RGB565_YELLOW;
+static constexpr uint16_t TFT_DARKGREY = RGB565_DARKGREY;
 
 // ── Runtime state ──────────────────────────────────────────────────
 
@@ -159,24 +184,6 @@ void IRAM_ATTR onImuWake() {
 
 // ── LCD init ───────────────────────────────────────────────────────
 
-static void prepareLcdPins() {
-  pinMode(LCD_CS_PIN, OUTPUT);
-  pinMode(LCD_DC_PIN, OUTPUT);
-  pinMode(LCD_SCK_PIN, OUTPUT);
-  pinMode(LCD_MOSI_PIN, OUTPUT);
-  digitalWrite(LCD_CS_PIN, HIGH);
-  digitalWrite(LCD_DC_PIN, HIGH);
-  digitalWrite(LCD_SCK_PIN, LOW);
-  digitalWrite(LCD_MOSI_PIN, LOW);
-}
-
-static void hardResetPanel() {
-  pinMode(LCD_RST_PIN, OUTPUT);
-  digitalWrite(LCD_RST_PIN, HIGH); delay(20);
-  digitalWrite(LCD_RST_PIN, LOW);  delay(80);
-  digitalWrite(LCD_RST_PIN, HIGH); delay(180);
-}
-
 static void setBacklight(uint8_t pwm) {
   pinMode(LCD_BL_PIN, OUTPUT);
   digitalWrite(LCD_BL_PIN, pwm ? HIGH : LOW);
@@ -184,12 +191,13 @@ static void setBacklight(uint8_t pwm) {
 }
 
 static void initLcd() {
-  prepareLcdPins();
   setBacklight(BACKLIGHT_AWAKE_PWM);
-  hardResetPanel();
-  tft.init();
-  tft.setRotation(0);
+  if (!tft.begin(40000000)) {
+    Serial.println("[LCD] Arduino_GFX begin failed");
+  }
+  tft.setRotation(LCD_ROTATION);
   tft.invertDisplay(true);
+  tft.setTextWrap(false);
   tft.fillScreen(TFT_BLACK);
 }
 
@@ -238,7 +246,7 @@ static void drawLayout() {
 
   tft.setTextColor(TFT_CYAN, TFT_BLACK);
   tft.setTextSize(1);
-  tft.setCursor(4, 23);
+  tft.setCursor(1, 23);
   tft.print("0.96 ESP32-S3");
 
   tft.drawFastHLine(4, 36, 72, TFT_WHITE);
@@ -269,10 +277,7 @@ static void drawLayout() {
 
   tft.drawFastHLine(4, 140, 72, TFT_WHITE);
 
-  // Footer
-  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
-  tft.setCursor(4, 148);
-  tft.print("U1 sleep U2 wake");
+  // Footer is updated with the sleep countdown in updateUi().
 }
 
 static void updateUi() {
@@ -282,27 +287,27 @@ static void updateUi() {
   printFixed(36, 56, TFT_GREEN, "ON", 7);
 
   // Battery
-  snprintf(buf, sizeof(buf), "%.2fV %d%%", batMv / 1000.0f, batPercent);
-  printFixed(28, 68, batteryColor(), buf, 12);
+  snprintf(buf, sizeof(buf), "%.2f %d", batMv / 1000.0f, batPercent);
+  printFixed(28, 68, batteryColor(), buf, 8);
 
   // Acc
   snprintf(buf, sizeof(buf), "%.1f %.1f", ax, ay);
-  printFixed(28, 102, TFT_WHITE, buf, 12);
+  printFixed(22, 102, TFT_WHITE, buf, 9);
 
   // Gyr
-  snprintf(buf, sizeof(buf), "%.1f %.1f", gx, gy);
-  printFixed(28, 114, TFT_WHITE, buf, 12);
+  snprintf(buf, sizeof(buf), "%.0f %.0f", gx, gy);
+  printFixed(22, 114, TFT_WHITE, buf, 9);
 
   // INT count + wake src
-  snprintf(buf, sizeof(buf), "%lu 0x%02X", (unsigned long)intCount, lastWakeSrc);
-  printFixed(28, 126, TFT_CYAN, buf, 12);
+  snprintf(buf, sizeof(buf), "%lu/%02X", (unsigned long)intCount, lastWakeSrc);
+  printFixed(22, 126, TFT_CYAN, buf, 9);
 
   // Sleep countdown
   uint32_t now = millis();
   uint32_t remain = now - lastActivityMs < AUTO_SLEEP_MS
                       ? (AUTO_SLEEP_MS - (now - lastActivityMs)) / 1000 : 0;
-  snprintf(buf, sizeof(buf), "sleep in %lus", (unsigned long)remain);
-  printFixed(8, 152, 0x8410, buf, 15);
+  snprintf(buf, sizeof(buf), "U1S U2W %lus", (unsigned long)remain);
+  printFixed(4, 148, TFT_DARKGREY, buf, 12);
 }
 
 // ── Sleep / Wake ───────────────────────────────────────────────────
@@ -318,8 +323,11 @@ static void screenWake(const char *reason) {
   Serial.printf("[WAKE] %s  count=%lu\n", reason, (unsigned long)wakeCount);
 }
 
-static void screenSleep() {
+static void screenSleep(const char *reason) {
   if (!screenAwake) return;
+
+  Serial.printf("[SLEEP] %s\n", reason);
+  Serial.flush();
 
   tft.fillScreen(TFT_BLACK);
   tft.setTextColor(TFT_CYAN, TFT_BLACK);
@@ -328,10 +336,10 @@ static void screenSleep() {
   tft.print("Sleep");
   tft.setTextSize(1);
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  tft.setCursor(8, 82);
+  tft.setCursor(4, 82);
   tft.print("Move to wake");
   tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
-  tft.setCursor(10, 102);
+  tft.setCursor(1, 102);
   tft.print("IMU INT = D14");
 
   delay(450);
@@ -403,13 +411,23 @@ void setup() {
   lastActivityMs = lastBatMs = millis();
   drawLayout();
   updateUi();
+  Serial.println("[READY] awake; USR1=sleep, USR2=manual wake, motion=IMU wake");
+  Serial.printf("[READY] auto sleep in %lu seconds\n",
+                (unsigned long)(AUTO_SLEEP_MS / 1000));
+  Serial.printf("[READY] sleep mode: %s\n",
+                ENABLE_LIGHT_SLEEP ? "ESP32 light sleep (USB CDC may disconnect)"
+                                   : "display only (USB CDC stays connected)");
 }
 
 void loop() {
   handleWakeEvents();
 
   if (!screenAwake) {
-    lightSleepWait();
+    if (ENABLE_LIGHT_SLEEP) {
+      lightSleepWait();
+    } else {
+      delay(10);
+    }
     handleWakeEvents();
     return;
   }
@@ -418,7 +436,7 @@ void loop() {
   if (digitalRead(USR1_PIN) == LOW) {
     delay(30);
     if (digitalRead(USR1_PIN) == LOW) {
-      screenSleep();
+      screenSleep("USR1");
       while (digitalRead(USR1_PIN) == LOW) delay(5);
     }
   }
@@ -426,6 +444,6 @@ void loop() {
   uint32_t now = millis();
   if (now - lastBatMs >= BAT_REFRESH_MS) { lastBatMs = now; updateBattery(); }
   if (now - lastUiMs >= UI_REFRESH_MS)   { lastUiMs = now; readImu(); updateUi(); }
-  if (now - lastActivityMs >= AUTO_SLEEP_MS) screenSleep();
+  if (now - lastActivityMs >= AUTO_SLEEP_MS) screenSleep("AUTO_TIMEOUT");
   delay(5);
 }

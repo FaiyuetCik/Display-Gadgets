@@ -8,13 +8,11 @@
   IMU auto-detection: QMI8658 (0x6A/0x6B) or LSM6-compatible (0x6A/0x6B).
 
   Required libraries:
-    - Seeed_GFX / TFT_eSPI
+    - GFX Library for Arduino (Arduino_GFX)
 */
 
 #include <Arduino.h>
-#include "driver.h"
-#include <SPI.h>
-#include <TFT_eSPI.h>
+#include <Arduino_GFX_Library.h>
 #include <Wire.h>
 #include <math.h>
 
@@ -26,6 +24,15 @@ static constexpr uint8_t LCD_SCK_PIN  = D8;
 static constexpr uint8_t LCD_MOSI_PIN = D10;
 static constexpr uint8_t LCD_RST_PIN  = D17;
 static constexpr uint8_t LCD_BL_PIN   = D18;
+
+static constexpr int  LCD_W = 80;
+static constexpr int  LCD_H = 160;
+static constexpr int  LCD_ROTATION = 2;
+static constexpr bool LCD_IPS = true;
+static constexpr int  LCD_COL_OFFSET_1 = 24;
+static constexpr int  LCD_ROW_OFFSET_1 = 0;
+static constexpr int  LCD_COL_OFFSET_2 = 24;
+static constexpr int  LCD_ROW_OFFSET_2 = 0;
 
 static constexpr uint8_t I2C_SDA_PIN  = D4;
 static constexpr uint8_t I2C_SCL_PIN  = D5;
@@ -46,7 +53,17 @@ static constexpr uint8_t  FRAME_INTERVAL_MS  = 8;
 
 // ── Display ────────────────────────────────────────────────────────
 
-TFT_eSPI tft;
+Arduino_DataBus *lcdBus = new Arduino_ESP32SPI(
+  LCD_DC_PIN, LCD_CS_PIN, LCD_SCK_PIN, LCD_MOSI_PIN
+);
+Arduino_GFX *gfx = new Arduino_ST7789(
+  lcdBus, LCD_RST_PIN, LCD_ROTATION, LCD_IPS, LCD_W, LCD_H,
+  LCD_COL_OFFSET_1, LCD_ROW_OFFSET_1, LCD_COL_OFFSET_2, LCD_ROW_OFFSET_2
+);
+Arduino_GFX &tft = *gfx;
+
+static constexpr uint16_t TFT_BLACK = RGB565_BLACK;
+static constexpr uint16_t TFT_WHITE = RGB565_WHITE;
 
 // ── IMU types ──────────────────────────────────────────────────────
 
@@ -83,8 +100,10 @@ uint32_t  lastFrameMs   = 0;
 
 // ── Color helpers ──────────────────────────────────────────────────
 
-static uint16_t rgb565(uint8_t r, uint8_t g, uint8_t b) {
-  return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
+// The verified 0.96-inch panel displays red and blue channels swapped.
+// Pre-swap R/B here so requested RGB colors appear correctly on the panel.
+static uint16_t panelRgb565(uint8_t r, uint8_t g, uint8_t b) {
+  return ((b & 0xF8) << 8) | ((g & 0xFC) << 3) | (r >> 3);
 }
 
 static uint16_t blendColor(uint16_t a, uint16_t b, uint8_t amount) {
@@ -191,24 +210,6 @@ static bool readAccel(float &x, float &y) {
 
 // ── Display init ───────────────────────────────────────────────────
 
-static void prepareDisplayPins() {
-  pinMode(LCD_CS_PIN, OUTPUT);
-  pinMode(LCD_DC_PIN, OUTPUT);
-  pinMode(LCD_SCK_PIN, OUTPUT);
-  pinMode(LCD_MOSI_PIN, OUTPUT);
-  digitalWrite(LCD_CS_PIN, HIGH);
-  digitalWrite(LCD_DC_PIN, HIGH);
-  digitalWrite(LCD_SCK_PIN, LOW);
-  digitalWrite(LCD_MOSI_PIN, LOW);
-}
-
-static void hardResetPanel() {
-  pinMode(LCD_RST_PIN, OUTPUT);
-  digitalWrite(LCD_RST_PIN, HIGH); delay(20);
-  digitalWrite(LCD_RST_PIN, LOW);  delay(80);
-  digitalWrite(LCD_RST_PIN, HIGH); delay(180);
-}
-
 static void forceBacklightOn() {
   pinMode(LCD_BL_PIN, OUTPUT);
   digitalWrite(LCD_BL_PIN, HIGH);
@@ -216,12 +217,12 @@ static void forceBacklightOn() {
 }
 
 static void initDisplay() {
-  prepareDisplayPins();
   forceBacklightOn();
-  hardResetPanel();
 
-  tft.init();
-  tft.setRotation(0);
+  if (!tft.begin(40000000)) {
+    Serial.println("[LCD] Arduino_GFX begin failed");
+  }
+  tft.setRotation(LCD_ROTATION);
   tft.invertDisplay(true);
   tft.fillScreen(TFT_BLACK);
 
@@ -233,7 +234,7 @@ static void initDisplay() {
 
 static void showMessage(const char *title, const char *line) {
   tft.fillScreen(TFT_BLACK);
-  tft.setTextColor(rgb565(255, 220, 80), TFT_BLACK);
+  tft.setTextColor(panelRgb565(255, 220, 80), TFT_BLACK);
   tft.setTextSize(1);
   tft.setCursor(6, 48);  tft.print(title);
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
@@ -264,8 +265,8 @@ static void clearOccupancy() {
 }
 
 static void resetParticles() {
-  const uint16_t deep   = rgb565(196, 128, 18);
-  const uint16_t bright = rgb565(255, 236, 92);
+  const uint16_t deep   = panelRgb565(196, 128, 18);
+  const uint16_t bright = panelRgb565(255, 236, 92);
   uint16_t idx = 0;
 
   clearOccupancy();
