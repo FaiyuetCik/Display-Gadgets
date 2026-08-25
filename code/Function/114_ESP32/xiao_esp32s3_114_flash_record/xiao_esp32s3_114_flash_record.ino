@@ -38,6 +38,8 @@ static constexpr uint8_t I2S_LRCLK_PIN = D13;
 
 static constexpr uint32_t SAMPLE_RATE_HZ = 16000;
 static constexpr uint32_t RECORD_SECONDS = 5;
+static constexpr uint32_t MIC_WARMUP_MS = 300;
+static constexpr uint32_t CAPTURE_TIMEOUT_MS = (RECORD_SECONDS + 2) * 1000UL;
 static constexpr uint32_t RECORD_SAMPLES = SAMPLE_RATE_HZ * RECORD_SECONDS;
 static constexpr uint32_t RECORD_BYTES = RECORD_SAMPLES * sizeof(int16_t);
 static constexpr size_t AUDIO_FRAMES = 256;
@@ -210,7 +212,7 @@ static bool initI2S() {
 }
 
 static bool saveRecording() {
-  File f = LittleFS.open(WAV_PATH, "w");
+  fs::File f = LittleFS.open(WAV_PATH, "w");
   if (!f) return false;
   WavHeader h = makeWavHeader(RECORD_BYTES);
   bool ok = f.write((const uint8_t *)&h, sizeof(h)) == sizeof(h);
@@ -220,7 +222,7 @@ static bool saveRecording() {
 }
 
 static bool loadRecording() {
-  File f = LittleFS.open(WAV_PATH, "r");
+  fs::File f = LittleFS.open(WAV_PATH, "r");
   if (!f || f.size() < (int)(sizeof(WavHeader) + RECORD_BYTES)) return false;
   f.seek(sizeof(WavHeader));
   bool ok = f.readBytes((char *)recordBuffer, RECORD_BYTES) == RECORD_BYTES;
@@ -235,14 +237,33 @@ static void recordToFlash() {
     return;
   }
 
+  screen("Recording", "Warming up mic...", "Please wait", TFT_YELLOW);
+  uint32_t warmupStart = millis();
+  while (millis() - warmupStart < MIC_WARMUP_MS) {
+    size_t discarded = 0;
+    i2s_channel_read(micChan, micBuffer, sizeof(micBuffer), &discarded, pdMS_TO_TICKS(50));
+  }
+
+  screen("Recording", "Capturing 5 seconds", "", TFT_RED);
+
   uint32_t captured = 0;
+  uint32_t captureStart = millis();
   while (captured < RECORD_SAMPLES) {
     size_t bytesRead = 0;
-    if (i2s_channel_read(micChan, micBuffer, sizeof(micBuffer), &bytesRead, pdMS_TO_TICKS(300)) != ESP_OK) continue;
-    uint32_t samples = min((uint32_t)(bytesRead / sizeof(int16_t)), RECORD_SAMPLES - captured);
-    memcpy(&recordBuffer[captured], micBuffer, samples * sizeof(int16_t));
-    captured += samples;
-    progressScreen(captured);
+    esp_err_t readResult = i2s_channel_read(
+      micChan, micBuffer, sizeof(micBuffer), &bytesRead, pdMS_TO_TICKS(300)
+    );
+    if (readResult == ESP_OK && bytesRead > 0) {
+      uint32_t samples = min((uint32_t)(bytesRead / sizeof(int16_t)), RECORD_SAMPLES - captured);
+      memcpy(&recordBuffer[captured], micBuffer, samples * sizeof(int16_t));
+      captured += samples;
+      progressScreen(captured);
+    }
+    if (millis() - captureStart > CAPTURE_TIMEOUT_MS) {
+      deinitMic();
+      screen("Error", "Mic capture timeout", "Try recording again", TFT_RED);
+      return;
+    }
   }
   deinitMic();
 
