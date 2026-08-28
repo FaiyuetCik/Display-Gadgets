@@ -84,6 +84,11 @@ Display-Gadgets/
 | `code/Function/147_ESP32/xiao_esp32s3_147_wakeup` | 抬手亮屏 — IMU 运动唤醒 |
 | `code/Function/147_ESP32/xiao_esp32s3_147_snake` | 贪吃蛇 — 触摸 + 按键 + IMU 三模式操控 |
 | `code/Function/147_ESP32/xiao_esp32s3_147_stopwatch` | 秒表 — 触控计时器 |
+| `code/Function/147_ESP32/xiao_esp32s3_147_mic_canvas` | 大音量条 — PDM 麦克风峰值分段柱状图 |
+| `code/Function/147_ESP32/xiao_esp32s3_147_touch_circle` | 触摸画圆 — 在触摸点绘制圆形 |
+| `code/Function/147_ESP32/xiao_esp32s3_147_sd_record` | SD 录音 — PDM 麦克风 → SD WAV → I2S 扬声器 |
+| `code/Function/147_ESP32/xiao_esp32s3plus_147_sd_bmp_reader_diag_v0_8` | SD BMP 图片浏览器 — 从 SD 卡显示 BMP（诊断版） |
+| `code/Function/147_ESP32/xiao_esp32s3plus_i2s_speaker_test_v1_1_correct_pins` | I2S 扬声器测试 — 正弦波经 MAX98357A（D11/D12/D13） |
 
 ### 1.14" nRF52840 Plus
 
@@ -92,6 +97,9 @@ Display-Gadgets/
 | `code/Function/114_nRF52840/xiao_nrf52840_114_graphictest` | 1.14" nRF52840 LCD 图形压力测试 |
 | `code/Function/114_nRF52840/xiao_nrf52840_114_electronic_quicksand` | 电子流沙 — 22×40 网格, 150 颗粒, 6px 格 |
 | `code/Function/114_nRF52840/xiao_nrf52840_114_wakeup` | 抬手亮屏 — IMU 运动唤醒 |
+| `code/Function/114_nRF52840/xiao_nrf52840_114_voice_bar` | 大音量条 — PDM 麦克风实时波形 + 分段柱状图 |
+| `code/Function/114_nRF52840/xiao_nrf52840_114_flash_record` | Flash 录音回放 — PDM 麦克风 → InternalFS → I2S 扬声器 |
+| `code/Function/114_nRF52840/xiao_nrf52840_114_counter` | Grove 机械键盘计数器 — Grove 口 ADC 按键检测 |
 
 ### 1.14" ESP32-S3 Plus
 
@@ -101,6 +109,8 @@ Display-Gadgets/
 | `code/Function/114_ESP32/xiao_esp32s3_114_electronic_quicksand` | 电子流沙 — 22×40 网格, 150 颗粒, 6px 格 |
 | `code/Function/114_ESP32/xiao_esp32s3_114_wakeup` | 抬手亮屏 — IMU 运动唤醒 + light sleep |
 | `code/Function/114_ESP32/xiao_esp32s3_114_flash_record` | Flash 录音回放 — PDM 麦克风 → LittleFS → I2S 扬声器（无需 SD 卡） |
+| `code/Function/114_ESP32/xiao_esp32s3_114_voice_bar` | 大音量条 — PDM 麦克风实时波形 + 分段柱状图 |
+| `code/Function/114_ESP32/xiao_esp32s3_114_counter` | Grove 机械键盘计数器 — Grove 口 ADC 按键检测 |
 
 ### 0.96" nRF52840 Plus
 
@@ -109,10 +119,16 @@ Display-Gadgets/
 | `code/Function/096_nRF52840/xiao_nrf52840_096_graphictest` | 0.96" nRF52840 LCD 图形压力测试 |
 | `code/Function/096_nRF52840/xiao_nrf52840_096_electronic_quicksand` | 电子流沙 — 适配 0.96" 80×160 屏幕 |
 | `code/Function/096_nRF52840/xiao_nrf52840_096_wakeup` | 抬手亮屏 — IMU 运动唤醒 |
+| `code/Function/096_nRF52840/xiao_nrf52840_096_flash_record` | Flash 录音回放 — PDM 麦克风 → InternalFS → I2S 扬声器 |
 
 ### 0.96" ESP32-S3 Plus
 
-> Function 演示即将推出。
+| 目录 | 说明 |
+|-----------|-------------|
+| `code/Function/096_ESP32/xiao_esp32s3_096_graphictest` | LCD 图形基准测试 — 10 种图元逐项计时 |
+| `code/Function/096_ESP32/xiao_esp32s3_096_electronic_quicksand` | 电子流沙 — IMU 驱动的粒子流体模拟 |
+| `code/Function/096_ESP32/xiao_esp32s3_096_wakeup` | 抬手亮屏 — IMU 运动唤醒（light sleep） |
+| `code/Function/096_ESP32/xiao_esp32s3_096_flash_record` | Flash 录音回放 — PDM 麦克风 → LittleFS → I2S 扬声器（需 SPIFFS 分区） |
 
 ## 提示和已知问题
 
@@ -127,7 +143,7 @@ Display-Gadgets/
 
 4. **缺少 Seeed_Arduino_FS**: 如编译提示缺少 `Seeed_Arduino_FS`，请从 [GitHub](https://github.com/Seeed-Studio/Seeed_Arduino_FS) 或 Arduino Library Manager 安装。
 
-5. **IMU 驱动**: LSM6DS3 及 QMI8658 兼容 IMU 均使用 `Seeed_Arduino_LSM6DS3` 库。
+5. **IMU 驱动**: 六款板子均使用 **LSM6DS3** IMU。安装 `Seeed_Arduino_LSM6DS3`（或 SparkFun LSM6DS3）。部分 demo 代码里有 QMI8658 fallback 路径，但硬件只有 LSM6DS3。
 
 6. **nRF52 的 SdFat**: nRF52 SDK 自带 SdFat 库，请勿单独安装其他版本 — 会冲突。
 
@@ -148,13 +164,17 @@ Display-Gadgets/
 
 10. **GraphicTest 与 SD 卡**: 部分 GraphicTest sketch 在插入 SD 卡时冷启动可能会卡住（尤其是在 `Lines` 渲染阶段）。运行 GraphicTest 前请先拔出 SD 卡；如需同时使用 SD + LCD，请使用 SD image reader 示例。
 
+11. **ESP32 flash_record 需要 SPIFFS 分区**: 1.14" 和 0.96" ESP32-S3 的录音 demo 把 WAV 存在 `LittleFS`，需要 SPIFFS 分区。烧录前在 Arduino IDE 选择 **Tools > Partition Scheme > "Default with spiffs (3MB APP/1.5MB SPIFFS)"**，否则 `LittleFS.begin()` 失败、屏幕显示 "Write failed / Check flash"。
+
 ## 所需库
 
 | 库 | 用途 | 来源 |
 |---------|---------|--------|
 | Seeed nRF52 Boards | nRF52840 开发板包 (v1.1.13+) | Arduino Boards Manager |
+| esp32 Boards by Espressif | ESP32-S3 开发板包 (3.3.11+) | Arduino Boards Manager |
 | Seeed_GFX | 屏幕图形库（替代 TFT_eSPI） | [GitHub](https://github.com/Seeed-Studio/Seeed_GFX) / Library Manager |
-| Seeed_Arduino_LSM6DS3 | LSM6DS3 / QMI8658 IMU 驱动 | [GitHub](https://github.com/Seeed-Studio/Seeed_Arduino_LSM6DS3) / Library Manager |
+| GFX Library for Arduino | 屏幕图形库（Arduino_GFX，0.96" 及多个 demo 使用） | Arduino Library Manager |
+| Seeed_Arduino_LSM6DS3 | LSM6DS3 IMU 驱动 | [GitHub](https://github.com/Seeed-Studio/Seeed_Arduino_LSM6DS3) / Library Manager |
 | Seeed_Arduino_FS | 文件系统抽象层 | [GitHub](https://github.com/Seeed-Studio/Seeed_Arduino_FS) / Library Manager |
 | Adafruit_TinyUSB | nRF52 USB 串口补丁 | [GitHub](https://github.com/adafruit/Adafruit_TinyUSB_Arduino) / Library Manager |
 | SdFat | SD 卡（nRF52 SDK 自带） | 包含在 Seeed nRF52 Boards 中 |
@@ -162,7 +182,7 @@ Display-Gadgets/
 
 ## Wiki
 
-面向用户的文档发布在 [Seeed Studio Wiki](https://wiki.seeedstudio.com/)。请在 **Sensing → LCD Displays → Display Gadgets** 下查看。
+面向用户的文档发布在 [Seeed Studio Wiki](https://wiki.seeedstudio.com/)。请在 **Sensor → LCD Displays → Display Gadgets** 下查看。
 
 ## 相关仓库
 
