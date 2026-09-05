@@ -151,12 +151,7 @@ Standalone single-feature demos under `code_GFX2/Function/`, migrated to **Seeed
 
 7. **Color inversion on 1.47" display**: If colors appear inverted (black ↔ white, red ↔ cyan, green ↔ purple, yellow ↔ blue), toggle `tft.invertDisplay(false)` or `tft.invertDisplay(true)` after `tft.init()` and rotation setup. This is an LCD inversion issue, not an RGB/BGR byte-order problem.
 
-8. **SquareLine Studio workflow**: To use SquareLine-generated UIs on these boards:
-   - a. Design the UI in SquareLine Studio and export the project template
-   - b. Extract the package and copy the UI library folder into your Arduino libraries
-   - c. Copy the screen `driver.h` into the exported Arduino sketch folder
-   - d. Install `Seeed_GFX2` library
-   - e. Install Seeed LVGL library and copy its `lv_conf.h` to your Arduino library path
+8. **SquareLine Studio workflow**: Coming soon — SquareLine-generated UI support for these boards is not yet available.
 
 9. **Shared SPI bus (LCD + SD)**: The LCD and SD card share the same SPI bus. After each LCD refresh, re-initialize the SD card before accessing it again:
    ```cpp

@@ -151,12 +151,7 @@ Display-Gadgets/
 
 7. **1.47" 屏幕颜色反转**: 如果屏幕颜色出现反转（黑↔白、红↔青、绿↔紫、黄↔蓝），在 `tft.init()` 和旋转设置后调用 `tft.invertDisplay(false)` 或 `tft.invertDisplay(true)` 切换。这是 LCD inversion 问题，不是 RGB/BGR 字节序问题。
 
-8. **SquareLine Studio 工作流程**: 在这些板子上使用 SquareLine 生成的 UI：
-   - a. 在 SquareLine Studio 中设计 UI 并导出项目模板
-   - b. 解压文件包，将 UI 库文件夹复制到 Arduino libraries
-   - c. 将屏幕 `driver.h` 复制到导出的 Arduino sketch 文件夹
-   - d. 安装 `Seeed_GFX2` 库
-   - e. 安装 Seeed LVGL 库，将其 `lv_conf.h` 复制到 Arduino 库路径
+8. **SquareLine Studio 工作流程**: 即将推出 —— 这些板子的 SquareLine 生成 UI 支持尚未提供。
 
 9. **共享 SPI 总线（LCD + SD）**: LCD 和 SD 卡共用 SPI 总线。每次 LCD 刷新后，如需访问 SD 卡请重新初始化：
    ```cpp
