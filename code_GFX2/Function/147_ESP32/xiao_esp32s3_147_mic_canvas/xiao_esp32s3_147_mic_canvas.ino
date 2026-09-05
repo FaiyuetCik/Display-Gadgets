@@ -9,7 +9,7 @@
   Ported to Seeed_GFX2: the Board/Config templates replace the original
   driver.h + manual pin setup + tft.init()/setRotation(0)/applyFix()/
   invertDisplay(false). DROP driver.h + initDisplay().
-  Config_XIAO_1inch47_Touch_JD9853A bakes 172x320 BGR invert=false rot0.
+  Config_Seeed_1inch47_Touch_JD9853A bakes 172x320 BGR invert=false rot0.
   I2S PDM microphone (ESP-IDF v5) unchanged.
 
   Required libraries:
@@ -217,7 +217,7 @@ void setup() {
   Serial.println("=== Big Volume Bar (ESP32-S3) ===");
 
   if (!display.begin<Board_XIAO_1inch47_Touch_Display<LCD_RST_PIN, LCD_BL_PIN>,
-                     Config_XIAO_1inch47_Touch_JD9853A>()) {
+                     Config_Seeed_1inch47_Touch_JD9853A>()) {
     Serial.println(display.lastResult().message);
     return;
   }

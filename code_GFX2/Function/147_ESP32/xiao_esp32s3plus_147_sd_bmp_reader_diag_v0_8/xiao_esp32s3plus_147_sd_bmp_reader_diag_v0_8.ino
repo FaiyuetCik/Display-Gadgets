@@ -33,7 +33,7 @@
   Ported to Seeed_GFX2: the Board/Config templates replace the original
   Arduino_SWSPI + Arduino_ST7789 bus/panel construction, the manual RST pulse /
   backlight-on / gfx->begin() / lcdWriteMadctlFix (0x36/0x48 MADCTL).
-  Config_XIAO_1inch47_Touch_JD9853A bakes 172x320 BGR invert=false rot0.
+  Config_Seeed_1inch47_Touch_JD9853A bakes 172x320 BGR invert=false rot0.
   gfx->draw16bitRGBBitmap(0,0,frameBuf,W,H) is replaced with
   display.pushImage(0,0,W,H,frameBuf) (draw16bitRGBBitmap does not exist in
   Seeed_GFX). The custom BMP decoder, the full-frame RAM buffer, WiFi-off, the
@@ -130,7 +130,7 @@ static void endSdAndReturnToLcd() {
 
 static bool initLcd() {
   if (!display.begin<Board_XIAO_1inch47_Touch_Display<LCD_RST_PIN, LCD_BL_PIN>,
-                     Config_XIAO_1inch47_Touch_JD9853A>()) {
+                     Config_Seeed_1inch47_Touch_JD9853A>()) {
     Serial.println(display.lastResult().message);
     return false;
   }

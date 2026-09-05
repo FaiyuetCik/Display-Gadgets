@@ -7,7 +7,7 @@
     - PDM microphone (CLK=D0, DATA=D1)
 
   Ported to Seeed_GFX2: Board_XIAO_1inch47_Touch_Display<38,37> +
-  Config_XIAO_1inch47_Touch_JD9853A replace driver.h + manual pin init +
+  Config_Seeed_1inch47_Touch_JD9853A replace driver.h + manual pin init +
   tft.init()/setRotation(0)/invertDisplay(false)/applyFix(). nRF52 PDM
   microphone (PDM.setPins/onReceive/read) unchanged.
 
@@ -172,7 +172,7 @@ void setup() {
   Serial.println("=== Big Volume Bar ===");
 
   if (!display.begin<Board_XIAO_1inch47_Touch_Display<LCD_RST_PIN, LCD_BL_PIN>,
-                     Config_XIAO_1inch47_Touch_JD9853A>()) {
+                     Config_Seeed_1inch47_Touch_JD9853A>()) {
     Serial.println(display.lastResult().message);
     return;
   }

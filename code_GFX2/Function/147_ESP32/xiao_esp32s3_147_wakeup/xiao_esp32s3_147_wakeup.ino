@@ -11,7 +11,7 @@
 
   Ported to Seeed_GFX2: the Board/Config templates replace the original
   driver.h + manual pin setup + tft.init()/setRotation(0)/applyXIAO147PanelFix()/
-  invertDisplay(false). DROP driver.h + initLcd(). Config_XIAO_1inch47_Touch_JD9853A
+  invertDisplay(false). DROP driver.h + initLcd(). Config_Seeed_1inch47_Touch_JD9853A
   bakes 172x320 BGR invert=false rot0. IMU I2C, battery ADC, USR buttons and
   light-sleep logic unchanged. setBacklight() kept for sleep dimming.
 
@@ -406,7 +406,7 @@ void setup() {
   Serial.println("=== XIAO ESP32-S3 Plus 1.47 IMU Wake Demo ===");
 
   if (!display.begin<Board_XIAO_1inch47_Touch_Display<LCD_RST_PIN, LCD_BL_PIN>,
-                     Config_XIAO_1inch47_Touch_JD9853A>()) {
+                     Config_Seeed_1inch47_Touch_JD9853A>()) {
     Serial.println(display.lastResult().message);
     return;
   }

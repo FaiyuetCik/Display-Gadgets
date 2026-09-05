@@ -20,7 +20,7 @@
   Ported to Seeed_GFX2: the Board/Config templates replace the original
   Arduino_SWSPI + Arduino_ST7789 bus/panel construction, the manual RST pulse /
   backlight-on / gfx->begin() / setRotation(0) / MADCTL 0x36/0x48 write /
-  invertDisplay(false). Config_XIAO_1inch47_Touch_JD9853A bakes 172x320 BGR
+  invertDisplay(false). Config_Seeed_1inch47_Touch_JD9853A bakes 172x320 BGR
   invert=false rot0. PDM record (I2S PDM RX) and MAX98357A playback (I2S STD),
   the WAV write/read, and the button state machine are unchanged. On ESP32-S3
   the SD uses the default SPI/FSPI host while the LCD uses HSPI, so the two
@@ -146,7 +146,7 @@ static void initDisplay() {
   spiDevicesIdle();
 
   if (!display.begin<Board_XIAO_1inch47_Touch_Display<LCD_RST_PIN, LCD_BL_PIN>,
-                     Config_XIAO_1inch47_Touch_JD9853A>()) {
+                     Config_Seeed_1inch47_Touch_JD9853A>()) {
     Serial.println(display.lastResult().message);
     return;
   }

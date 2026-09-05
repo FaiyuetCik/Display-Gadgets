@@ -13,7 +13,7 @@
 
   Ported to Seeed_GFX2: the Board/Config templates replace the original
   driver.h + manual pin setup + tft.init()/setRotation(0)/applyXIAO147PanelFix()/
-  invertDisplay(false). DROP driver.h + initDisplay(). Config_XIAO_1inch47_Touch_JD9853A
+  invertDisplay(false). DROP driver.h + initDisplay(). Config_Seeed_1inch47_Touch_JD9853A
   bakes 172x320 BGR invert=false rot0. All benchmark logic unchanged.
 
   Required libraries:
@@ -256,7 +256,7 @@ void setup() {
   Serial.println("=== XIAO ESP32-S3 Plus 1.47 graphic test ===");
 
   if (!display.begin<Board_XIAO_1inch47_Touch_Display<LCD_RST_PIN, LCD_BL_PIN>,
-                     Config_XIAO_1inch47_Touch_JD9853A>()) {
+                     Config_Seeed_1inch47_Touch_JD9853A>()) {
     Serial.println(display.lastResult().message);
     return;
   }

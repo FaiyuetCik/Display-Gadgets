@@ -20,7 +20,7 @@
     through a MAX98357A module connected to D11/D12/D13.
 
   Ported to Seeed_GFX2: Board_XIAO_1inch47_Touch_Display<38,37> +
-  Config_XIAO_1inch47_Touch_JD9853A replace driver.h + manual pin init +
+  Config_Seeed_1inch47_Touch_JD9853A replace driver.h + manual pin init +
   tft.init()/setRotation(0)/invertDisplay(false)/setSwapBytes(true) +
   applyPanelFix(). Keeps SdFat (shared SPI with LCD), the PDM capture /
   I2S raw playback / WAV writer, and acquireForLcd/acquireForSd shared-SPI
@@ -678,7 +678,7 @@ void setup() {
   pinMode(USR2_PIN, INPUT_PULLUP);
 
   if (!display.begin<Board_XIAO_1inch47_Touch_Display<LCD_RST_PIN, LCD_BL_PIN>,
-                     Config_XIAO_1inch47_Touch_JD9853A>()) {
+                     Config_Seeed_1inch47_Touch_JD9853A>()) {
     Serial.println(display.lastResult().message);
     return;
   }

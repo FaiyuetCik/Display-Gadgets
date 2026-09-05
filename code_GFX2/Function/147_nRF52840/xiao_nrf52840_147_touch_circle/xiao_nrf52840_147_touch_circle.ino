@@ -22,7 +22,7 @@
     LCD BL   = D18
 
   Ported to Seeed_GFX2: Board_XIAO_1inch47_Touch_Display<38,37> +
-  Config_XIAO_1inch47_Touch_JD9853A replace driver.h + manual pin init +
+  Config_Seeed_1inch47_Touch_JD9853A replace driver.h + manual pin init +
   tft.init()/setRotation(0)/invertDisplay(false)/applyXIAO147PanelFix().
   Touch migrates from raw axs5106l_device.h (touch_init/get_touch_data) to
   Touch_AXS5106L + display.attachTouch()/display.getTouch(). getTouch() already
@@ -198,7 +198,7 @@ void setup() {
 
   // display.begin() resets the shared LCD/touch RST line and initializes the LCD.
   if (!display.begin<Board_XIAO_1inch47_Touch_Display<LCD_RST_PIN, LCD_BL_PIN>,
-                     Config_XIAO_1inch47_Touch_JD9853A>()) {
+                     Config_Seeed_1inch47_Touch_JD9853A>()) {
     Serial.println(display.lastResult().message);
     return;
   }
