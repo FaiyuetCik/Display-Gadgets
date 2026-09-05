@@ -18,7 +18,7 @@ Display-Gadgets/
 │   │   ├── 096_nRF52840/   0.96" nRF52840 出厂 Dashboard 及原理图
 │   │   ├── 096_ESP32/      0.96" ESP32-S3 出厂 Dashboard 及原理图
 │   │   ├── images/         演示截图、GIF 和视频
-│   │   └── squareline/     SquareLine Studio UI 工程文件
+│   │   └── squareline/     SquareLine Studio UI 工程文件（即将推出）
 │   └── Function/           旧版独立单功能演示
 │       ├── 147_nRF52840/
 │       ├── 147_ESP32/

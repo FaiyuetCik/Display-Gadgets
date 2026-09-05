@@ -18,7 +18,7 @@ Display-Gadgets/
 │   │   ├── 096_nRF52840/   0.96" nRF52840 factory dashboard & schematics
 │   │   ├── 096_ESP32/      0.96" ESP32-S3 factory dashboard & schematics
 │   │   ├── images/         Demo screenshots, GIFs and videos
-│   │   └── squareline/     SquareLine Studio UI project files
+│   │   └── squareline/     SquareLine Studio UI project files (coming soon)
 │   └── Function/           Legacy standalone single-feature demos
 │       ├── 147_nRF52840/
 │       ├── 147_ESP32/
