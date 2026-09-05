@@ -8,7 +8,7 @@ Hardware documentation, drivers, factory firmware, and demo code for the **XIAO 
 
 ```
 Display-Gadgets/
-├── code/
+├── code/                          Legacy demos (TFT_eSPI / Arduino_GFX)
 │   ├── example/
 │   │   ├── basic/          Basic hardware verification sketches
 │   │   ├── 147_nRF52840/   1.47" nRF52840 factory dashboard & schematics
@@ -19,7 +19,15 @@ Display-Gadgets/
 │   │   ├── 096_ESP32/      0.96" ESP32-S3 factory dashboard & schematics
 │   │   ├── images/         Demo screenshots, GIFs and videos
 │   │   └── squareline/     SquareLine Studio UI project files
-│   └── Function/           Standalone single-feature demos
+│   └── Function/           Legacy standalone single-feature demos
+│       ├── 147_nRF52840/
+│       ├── 147_ESP32/
+│       ├── 114_nRF52840/
+│       ├── 114_ESP32/
+│       ├── 096_nRF52840/
+│       └── 096_ESP32/
+├── code_GFX2/                     Seeed_GFX2-migrated Function demos (current)
+│   └── Function/
 │       ├── 147_nRF52840/
 │       ├── 147_ESP32/
 │       ├── 114_nRF52840/
@@ -58,77 +66,71 @@ Each subdirectory under `code/example/basic/` is a standalone Arduino sketch for
 
 ## Function Demos
 
-Standalone single-feature demos under `code/Function/`. Each is a self-contained Arduino sketch demonstrating one onboard peripheral or application pattern.
+Standalone single-feature demos under `code_GFX2/Function/`, migrated to **Seeed_GFX2** (the current-generation graphics library). Each is a self-contained Arduino sketch demonstrating one onboard peripheral or application pattern. Legacy TFT_eSPI/Arduino_GFX versions remain under `code/Function/`.
 
 ### 1.47" nRF52840 Plus
 
 | Directory | Description |
 |-----------|-------------|
-| `code/Function/147_nRF52840/xiao_nrf52840_147_graphictest` | LCD graphics stress test — drawLine/drawPixel heavy rendering |
-| `code/Function/147_nRF52840/xiao_nrf52840_147_touch_circle` | Touch Circle — draw colored circles on touch points |
-| `code/Function/147_nRF52840/xiao_nrf52840_147_mic_canvas` | Big Volume Bar — PDM microphone peak meter with segmented bar |
-| `code/Function/147_nRF52840/xiao_nrf52840_147_sd_image_reader` | SD BMP image reader — read and display BMP files from SD card |
-| `code/Function/147_nRF52840/xiao_nrf52840_147_sd_bmp_reader_stress_v0_1` | SD BMP reader stress test (legacy version) |
-| `code/Function/147_nRF52840/xiao_nrf52840_147_sd_unline_record` | Offline audio record/playback — PDM mic → RAM → I2S speaker |
-| `code/Function/147_nRF52840/xiao_nrf52840_147_electronic_quicksand` | Electronic Quicksand — IMU-driven particle fluid simulation |
-| `code/Function/147_nRF52840/xiao_nrf52840_147_wakeup` | Raise to Wake — IMU motion wake-up with battery status display |
-| `code/Function/147_nRF52840/xiao_nrf52840_147_stopwatch` | Stopwatch — touch-controlled timer on 1.47" display |
+| `code_GFX2/Function/147_nRF52840/xiao_nrf52840_147_graphictest` | LCD graphics stress test — drawLine/drawPixel heavy rendering |
+| `code_GFX2/Function/147_nRF52840/xiao_nrf52840_147_touch_circle` | Touch Circle — draw white circles on touch points |
+| `code_GFX2/Function/147_nRF52840/xiao_nrf52840_147_mic_canvas` | Big Volume Bar — PDM microphone peak meter with segmented bar |
+| `code_GFX2/Function/147_nRF52840/xiao_nrf52840_147_sd_image_reader` | SD BMP image reader — read and display BMP files from SD card |
+| `code_GFX2/Function/147_nRF52840/xiao_nrf52840_147_sd_unline_record` | Offline audio record/playback — PDM mic → RAM → I2S speaker |
+| `code_GFX2/Function/147_nRF52840/xiao_nrf52840_147_electronic_quicksand` | Electronic Quicksand — IMU-driven particle fluid simulation |
+| `code_GFX2/Function/147_nRF52840/xiao_nrf52840_147_wakeup` | Raise to Wake — IMU motion wake-up with battery status display |
 
 ### 1.47" ESP32-S3 Plus
 
 | Directory | Description |
 |-----------|-------------|
-| `code/Function/147_ESP32/xiao_esp32s3_147_graphictest` | LCD graphics stress test for 1.47" ESP32-S3 |
-| `code/Function/147_ESP32/xiao_esp32s3_147_sd_photo_frame` | SD card photo frame — slideshow from BMP files on SD |
-| `code/Function/147_ESP32/xiao_esp32s3_147_electronic_quicksand` | Electronic Quicksand — IMU-driven particle fluid simulation |
-| `code/Function/147_ESP32/xiao_esp32s3_147_wakeup` | Raise to Wake — IMU motion wake-up |
-| `code/Function/147_ESP32/xiao_esp32s3_147_snake` | SNAKE game — touch + buttons + IMU controls |
-| `code/Function/147_ESP32/xiao_esp32s3_147_stopwatch` | Stopwatch — touch-controlled timer |
-| `code/Function/147_ESP32/xiao_esp32s3_147_mic_canvas` | Big Volume Bar — PDM mic peak meter with segmented bar |
-| `code/Function/147_ESP32/xiao_esp32s3_147_touch_circle` | Touch Circle — draw circles on touch points |
-| `code/Function/147_ESP32/xiao_esp32s3_147_sd_record` | SD Recorder — PDM mic → SD WAV → I2S playback |
-| `code/Function/147_ESP32/xiao_esp32s3plus_147_sd_bmp_reader_diag_v0_8` | SD BMP reader — display BMP files from SD (diagnostic version) |
-| `code/Function/147_ESP32/xiao_esp32s3plus_i2s_speaker_test_v1_1_correct_pins` | I2S speaker test — sine wave via MAX98357A (D11/D12/D13) |
+| `code_GFX2/Function/147_ESP32/xiao_esp32s3_147_graphictest` | LCD graphics stress test for 1.47" ESP32-S3 |
+| `code_GFX2/Function/147_ESP32/xiao_esp32s3_147_touch_circle` | Touch Circle — draw circles on touch points |
+| `code_GFX2/Function/147_ESP32/xiao_esp32s3_147_mic_canvas` | Big Volume Bar — PDM mic peak meter with segmented bar |
+| `code_GFX2/Function/147_ESP32/xiao_esp32s3_147_sd_record` | SD Recorder — PDM mic → SD WAV → I2S playback |
+| `code_GFX2/Function/147_ESP32/xiao_esp32s3plus_147_sd_bmp_reader_diag_v0_8` | SD BMP reader — display BMP files from SD (diagnostic version) |
+| `code_GFX2/Function/147_ESP32/xiao_esp32s3_147_electronic_quicksand` | Electronic Quicksand — IMU-driven particle fluid simulation |
+| `code_GFX2/Function/147_ESP32/xiao_esp32s3_147_wakeup` | Raise to Wake — IMU motion wake-up |
 
 ### 1.14" nRF52840 Plus
 
 | Directory | Description |
 |-----------|-------------|
-| `code/Function/114_nRF52840/xiao_nrf52840_114_graphictest` | LCD graphics stress test for 1.14" nRF52840 |
-| `code/Function/114_nRF52840/xiao_nrf52840_114_electronic_quicksand` | Electronic Quicksand — 22×40 grid, 150 particles, 6px cells |
-| `code/Function/114_nRF52840/xiao_nrf52840_114_wakeup` | Raise to Wake — IMU motion wake-up |
-| `code/Function/114_nRF52840/xiao_nrf52840_114_voice_bar` | Big Volume Bar — PDM mic real-time waveform + segmented meter |
-| `code/Function/114_nRF52840/xiao_nrf52840_114_flash_record` | Flash audio record/playback — PDM mic → InternalFS → I2S speaker |
-| `code/Function/114_nRF52840/xiao_nrf52840_114_counter` | Grove Mech Keycap Counter — ADC key detection via Grove port |
+| `code_GFX2/Function/114_nRF52840/xiao_nrf52840_114_graphictest` | LCD graphics stress test for 1.14" nRF52840 |
+| `code_GFX2/Function/114_nRF52840/xiao_nrf52840_114_electronic_quicksand` | Electronic Quicksand — 22×40 grid, 150 particles, 6px cells |
+| `code_GFX2/Function/114_nRF52840/xiao_nrf52840_114_wakeup` | Raise to Wake — IMU motion wake-up |
+| `code_GFX2/Function/114_nRF52840/xiao_nrf52840_114_voice_bar` | Big Volume Bar — PDM mic real-time waveform + segmented meter |
+| `code_GFX2/Function/114_nRF52840/xiao_nrf52840_114_flash_record` | Flash audio record/playback — PDM mic → InternalFS → I2S speaker |
+| `code_GFX2/Function/114_nRF52840/xiao_nrf52840_114_sht31_temperature_humidity` | SHT31 temperature & humidity sensor readout |
 
 ### 1.14" ESP32-S3 Plus
 
 | Directory | Description |
 |-----------|-------------|
-| `code/Function/114_ESP32/xiao_esp32s3_114_graphictest` | LCD graphics stress test for 1.14" ESP32-S3 |
-| `code/Function/114_ESP32/xiao_esp32s3_114_electronic_quicksand` | Electronic Quicksand — 22×40 grid, 150 particles, 6px cells |
-| `code/Function/114_ESP32/xiao_esp32s3_114_wakeup` | Raise to Wake — IMU motion wake-up with light sleep |
-| `code/Function/114_ESP32/xiao_esp32s3_114_flash_record` | Flash audio record/playback — PDM mic → LittleFS → I2S speaker (no SD card needed) |
-| `code/Function/114_ESP32/xiao_esp32s3_114_voice_bar` | Big Volume Bar — PDM mic real-time waveform + segmented meter |
-| `code/Function/114_ESP32/xiao_esp32s3_114_counter` | Grove Mech Keycap Counter — ADC key detection via Grove port |
+| `code_GFX2/Function/114_ESP32/xiao_esp32s3_114_graphictest` | LCD graphics stress test for 1.14" ESP32-S3 |
+| `code_GFX2/Function/114_ESP32/xiao_esp32s3_114_electronic_quicksand` | Electronic Quicksand — 22×40 grid, 150 particles, 6px cells |
+| `code_GFX2/Function/114_ESP32/xiao_esp32s3_114_wakeup` | Raise to Wake — IMU motion wake-up with light sleep |
+| `code_GFX2/Function/114_ESP32/xiao_esp32s3_114_flash_record` | Flash audio record/playback — PDM mic → LittleFS → I2S speaker (no SD card needed) |
+| `code_GFX2/Function/114_ESP32/xiao_esp32s3_114_voice_bar` | Big Volume Bar — PDM mic real-time waveform + segmented meter |
+| `code_GFX2/Function/114_ESP32/xiao_esp32s3_114_sht31_temperature_humidity` | SHT31 temperature & humidity sensor readout |
 
 ### 0.96" nRF52840 Plus
 
 | Directory | Description |
 |-----------|-------------|
-| `code/Function/096_nRF52840/xiao_nrf52840_096_graphictest` | LCD graphics stress test for 0.96" nRF52840 |
-| `code/Function/096_nRF52840/xiao_nrf52840_096_electronic_quicksand` | Electronic Quicksand adapted for 0.96" 80×160 display |
-| `code/Function/096_nRF52840/xiao_nrf52840_096_wakeup` | Raise to Wake — IMU motion wake-up |
-| `code/Function/096_nRF52840/xiao_nrf52840_096_flash_record` | Flash audio record/playback — PDM mic → InternalFS → I2S speaker |
+| `code_GFX2/Function/096_nRF52840/xiao_nrf52840_096_graphictest` | LCD graphics stress test for 0.96" nRF52840 |
+| `code_GFX2/Function/096_nRF52840/xiao_nrf52840_096_electronic_quicksand` | Electronic Quicksand adapted for 0.96" 80×160 display |
+| `code_GFX2/Function/096_nRF52840/xiao_nrf52840_096_wakeup` | Raise to Wake — IMU motion wake-up |
+| `code_GFX2/Function/096_nRF52840/xiao_nrf52840_096_flash_record` | Flash audio record/playback — PDM mic → InternalFS → I2S speaker |
 
 ### 0.96" ESP32-S3 Plus
 
 | Directory | Description |
 |-----------|-------------|
-| `code/Function/096_ESP32/xiao_esp32s3_096_graphictest` | LCD graphics benchmark — 10 primitives with per-op timing |
-| `code/Function/096_ESP32/xiao_esp32s3_096_electronic_quicksand` | Electronic Quicksand — IMU-driven particle fluid simulation |
-| `code/Function/096_ESP32/xiao_esp32s3_096_wakeup` | Raise to Wake — IMU motion wake-up (light sleep) |
-| `code/Function/096_ESP32/xiao_esp32s3_096_flash_record` | Flash audio record/playback — PDM mic → LittleFS → I2S speaker (needs SPIFFS partition) |
+| `code_GFX2/Function/096_ESP32/xiao_esp32s3_096_graphictest` | LCD graphics benchmark — 10 primitives with per-op timing |
+| `code_GFX2/Function/096_ESP32/xiao_esp32s3_096_electronic_quicksand` | Electronic Quicksand — IMU-driven particle fluid simulation |
+| `code_GFX2/Function/096_ESP32/xiao_esp32s3_096_wakeup` | Raise to Wake — IMU motion wake-up (light sleep) |
+| `code_GFX2/Function/096_ESP32/xiao_esp32s3_096_flash_record` | Flash audio record/playback — PDM mic → LittleFS → I2S speaker (needs SPIFFS partition) |
 
 ## Tips & Known Issues
 
@@ -139,11 +141,11 @@ Standalone single-feature demos under `code/Function/`. Each is a self-contained
    #include <Adafruit_TinyUSB.h>
    ```
 
-3. **Seeed_GFX conflicts with TFT_eSPI**: Remove any existing `TFT_eSPI` library before installing `Seeed_GFX`. The two conflict.
+3. **Seeed_GFX2 conflicts with TFT_eSPI**: Remove any existing `TFT_eSPI` library before installing `Seeed_GFX2`. The two conflict.
 
 4. **Missing Seeed_Arduino_FS**: If the compiler reports `Seeed_Arduino_FS` missing, install it from [GitHub](https://github.com/Seeed-Studio/Seeed_Arduino_FS) or via Arduino Library Manager.
 
-5. **IMU driver**: All six boards use the **LSM6DS3** IMU. Install `Seeed_Arduino_LSM6DS3` (or SparkFun LSM6DS3). Some demo sketches contain a QMI8658 fallback path in code, but the hardware is LSM6DS3 only.
+5. **IMU driver**: All six boards use the **LSM6DS3** IMU. The factory Dashboard uses **SparkFun LSM6DS3** (`SparkFunLSM6DS3.h`), while the `code_GFX2` Function demos use **Seeed_Arduino_LSM6DS3** (`LSM6DS3.h`). The two headers are not interchangeable — install the one your target firmware needs. Some demo sketches contain a QMI8658 fallback path in code, but the hardware is LSM6DS3 only.
 
 6. **SdFat for nRF52**: The nRF52 SDK bundles its own SdFat library. Do not install a separate SdFat version — it will conflict.
 
@@ -153,7 +155,7 @@ Standalone single-feature demos under `code/Function/`. Each is a self-contained
    - a. Design the UI in SquareLine Studio and export the project template
    - b. Extract the package and copy the UI library folder into your Arduino libraries
    - c. Copy the screen `driver.h` into the exported Arduino sketch folder
-   - d. Install `Seeed_GFX` library
+   - d. Install `Seeed_GFX2` library
    - e. Install Seeed LVGL library and copy its `lv_conf.h` to your Arduino library path
 
 9. **Shared SPI bus (LCD + SD)**: The LCD and SD card share the same SPI bus. After each LCD refresh, re-initialize the SD card before accessing it again:
@@ -172,9 +174,10 @@ Standalone single-feature demos under `code/Function/`. Each is a self-contained
 |---------|---------|--------|
 | Seeed nRF52 Boards | nRF52840 board package (v1.1.13+) | Arduino Boards Manager |
 | esp32 Boards by Espressif | ESP32-S3 board package (3.3.11+) | Arduino Boards Manager |
-| Seeed_GFX | Display graphics (replaces TFT_eSPI) | [GitHub](https://github.com/Seeed-Studio/Seeed_GFX) / Library Manager |
+| Seeed_GFX2 | Display graphics for `code_GFX2` Function demos (replaces TFT_eSPI) | [GitHub](https://github.com/Seeed-Studio/Seeed_GFX2) / Library Manager |
 | GFX Library for Arduino | Display graphics (Arduino_GFX, used by 0.96" and several demos) | Arduino Library Manager |
-| Seeed_Arduino_LSM6DS3 | LSM6DS3 IMU driver | [GitHub](https://github.com/Seeed-Studio/Seeed_Arduino_LSM6DS3) / Library Manager |
+| Seeed_Arduino_LSM6DS3 | LSM6DS3 IMU driver (Function demos) | [GitHub](https://github.com/Seeed-Studio/Seeed_Arduino_LSM6DS3) / Library Manager |
+| SparkFun LSM6DS3 | LSM6DS3 IMU driver (factory Dashboard) | Arduino Library Manager |
 | Seeed_Arduino_FS | Filesystem abstraction | [GitHub](https://github.com/Seeed-Studio/Seeed_Arduino_FS) / Library Manager |
 | Adafruit_TinyUSB | USB serial patch for nRF52 | [GitHub](https://github.com/adafruit/Adafruit_TinyUSB_Arduino) / Library Manager |
 | SdFat | SD card (bundled with nRF52 SDK) | Included in Seeed nRF52 Boards |
@@ -186,6 +189,6 @@ User-facing documentation is published on the [Seeed Studio Wiki](https://wiki.s
 
 ## Related Repositories
 
-- [Seeed_GFX](https://github.com/Seeed-Studio/Seeed_GFX) — Display graphics library
+- [Seeed_GFX2](https://github.com/Seeed-Studio/Seeed_GFX2) — Display graphics library
 - [Seeed_Arduino_LSM6DS3](https://github.com/Seeed-Studio/Seeed_Arduino_LSM6DS3) — IMU driver
 - [Seeed_Arduino_FS](https://github.com/Seeed-Studio/Seeed_Arduino_FS) — Filesystem library
