@@ -23,7 +23,7 @@
 #include "panel/Panel_TFT.h"
 #include <Adafruit_TinyUSB.h>
 #include <Wire.h>
-#include "SparkFunLSM6DS3.h"   // was "LSM6DS3.h" (Seeed's lib, not installed) — SparkFun's is API-identical, already installed
+#include "LSM6DS3.h"           // Seeed_Arduino_LSM6DS3, same IMU library as the verified original sketch
 #include <nrf.h>
 #include <nrf_gpio.h>
 
