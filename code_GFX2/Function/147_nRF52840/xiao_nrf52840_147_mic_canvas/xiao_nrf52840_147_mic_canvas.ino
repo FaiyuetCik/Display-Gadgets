@@ -1,6 +1,6 @@
 /*
   XIAO nRF52840 Plus 1.47 Inch Display
-  Big Volume Bar — minimal PDM mic level meter
+  Volume Bar — minimal PDM mic level meter
 
   Hardware:
     - XIAO nRF52840 Plus + 1.47" Display (172x320)
@@ -169,7 +169,7 @@ static void drawTitle() {
 void setup() {
   Serial.begin(115200);
   delay(800);
-  Serial.println("=== Big Volume Bar ===");
+  Serial.println("=== Volume Bar ===");
 
   if (!display.begin<Board_XIAO_1inch47_Touch_Display<LCD_RST_PIN, LCD_BL_PIN>,
                      Config_Seeed_1inch47_Touch_JD9853A>()) {
