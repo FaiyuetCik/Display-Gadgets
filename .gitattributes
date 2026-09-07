@@ -1,0 +1,5 @@
+# Binary/downloadable resources — never normalize line endings
+*.step -text
+*.stl  -text
+*.pdf  -text
+*.zip  -text
