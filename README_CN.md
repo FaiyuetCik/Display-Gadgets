@@ -34,6 +34,7 @@ Display-Gadgets/
 │       ├── 114_ESP32/
 │       ├── 096_nRF52840/
 │       └── 096_ESP32/
+├── resources/              硬件资源：KiCad、原理图、3D 模型、数据手册、外壳、出厂固件
 └── schematics/             全部 6 款产品的 PDF 原理图
 ```
 
@@ -79,6 +80,7 @@ Display-Gadgets/
 | `code_GFX2/Function/147_nRF52840/xiao_nrf52840_147_sd_unline_record` | 离线录音回放 — PDM 麦克风 → RAM → I2S 扬声器 |
 | `code_GFX2/Function/147_nRF52840/xiao_nrf52840_147_electronic_quicksand` | 电子流沙 — IMU 驱动的粒子流体模拟 |
 | `code_GFX2/Function/147_nRF52840/xiao_nrf52840_147_wakeup` | 抬手亮屏 — IMU 运动唤醒 + 电池状态显示 |
+| `code_GFX2/Function/147_nRF52840/xiao_nrf52840_147_battery_status` | 电池状态 — 电池图标 + 电量百分比 + 充电检测 |
 
 ### 1.47" ESP32-S3 Plus
 
@@ -102,6 +104,7 @@ Display-Gadgets/
 | `code_GFX2/Function/114_nRF52840/xiao_nrf52840_114_voice_bar` | 大音量条 — PDM 麦克风实时波形 + 分段柱状图 |
 | `code_GFX2/Function/114_nRF52840/xiao_nrf52840_114_flash_record` | Flash 录音回放 — PDM 麦克风 → InternalFS → I2S 扬声器 |
 | `code_GFX2/Function/114_nRF52840/xiao_nrf52840_114_sht31_temperature_humidity` | SHT31 温湿度传感器读取 |
+| `code_GFX2/Function/114_nRF52840/xiao_nrf52840_114_battery_status` | 电池状态 — 电池图标 + 电量百分比 + 充电检测 |
 
 ### 1.14" ESP32-S3 Plus
 
@@ -122,6 +125,7 @@ Display-Gadgets/
 | `code_GFX2/Function/096_nRF52840/xiao_nrf52840_096_electronic_quicksand` | 电子流沙 — 适配 0.96" 80×160 屏幕 |
 | `code_GFX2/Function/096_nRF52840/xiao_nrf52840_096_wakeup` | 抬手亮屏 — IMU 运动唤醒 |
 | `code_GFX2/Function/096_nRF52840/xiao_nrf52840_096_flash_record` | Flash 录音回放 — PDM 麦克风 → InternalFS → I2S 扬声器 |
+| `code_GFX2/Function/096_nRF52840/xiao_nrf52840_096_battery_status` | 电池状态 — 电池图标 + 电量百分比 + 充电检测 |
 
 ### 0.96" ESP32-S3 Plus
 

@@ -34,6 +34,7 @@ Display-Gadgets/
 │       ├── 114_ESP32/
 │       ├── 096_nRF52840/
 │       └── 096_ESP32/
+├── resources/              Hardware resources: KiCad, schematic, 3D model, datasheet, enclosure, factory firmware
 └── schematics/             PDF schematics for all 6 products
 ```
 
@@ -79,6 +80,7 @@ Standalone single-feature demos under `code_GFX2/Function/`, migrated to **Seeed
 | `code_GFX2/Function/147_nRF52840/xiao_nrf52840_147_sd_unline_record` | Offline audio record/playback — PDM mic → RAM → I2S speaker |
 | `code_GFX2/Function/147_nRF52840/xiao_nrf52840_147_electronic_quicksand` | Electronic Quicksand — IMU-driven particle fluid simulation |
 | `code_GFX2/Function/147_nRF52840/xiao_nrf52840_147_wakeup` | Raise to Wake — IMU motion wake-up with battery status display |
+| `code_GFX2/Function/147_nRF52840/xiao_nrf52840_147_battery_status` | Battery Status — battery icon with charge level & charging detection |
 
 ### 1.47" ESP32-S3 Plus
 
@@ -102,6 +104,7 @@ Standalone single-feature demos under `code_GFX2/Function/`, migrated to **Seeed
 | `code_GFX2/Function/114_nRF52840/xiao_nrf52840_114_voice_bar` | Big Volume Bar — PDM mic real-time waveform + segmented meter |
 | `code_GFX2/Function/114_nRF52840/xiao_nrf52840_114_flash_record` | Flash audio record/playback — PDM mic → InternalFS → I2S speaker |
 | `code_GFX2/Function/114_nRF52840/xiao_nrf52840_114_sht31_temperature_humidity` | SHT31 temperature & humidity sensor readout |
+| `code_GFX2/Function/114_nRF52840/xiao_nrf52840_114_battery_status` | Battery Status — battery icon with charge level & charging detection |
 
 ### 1.14" ESP32-S3 Plus
 
@@ -122,6 +125,7 @@ Standalone single-feature demos under `code_GFX2/Function/`, migrated to **Seeed
 | `code_GFX2/Function/096_nRF52840/xiao_nrf52840_096_electronic_quicksand` | Electronic Quicksand adapted for 0.96" 80×160 display |
 | `code_GFX2/Function/096_nRF52840/xiao_nrf52840_096_wakeup` | Raise to Wake — IMU motion wake-up |
 | `code_GFX2/Function/096_nRF52840/xiao_nrf52840_096_flash_record` | Flash audio record/playback — PDM mic → InternalFS → I2S speaker |
+| `code_GFX2/Function/096_nRF52840/xiao_nrf52840_096_battery_status` | Battery Status — battery icon with charge level & charging detection |
 
 ### 0.96" ESP32-S3 Plus
 
