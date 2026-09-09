@@ -92,8 +92,8 @@ void loop() {
     g_shownD16 = roundedD16;
     g_shownCalc = roundedCalc;
   }
-  Serial.print("D16 "); Serial.print(d16, 3);
-  Serial.print("V | Calc "); Serial.print(calc, 3);
+  Serial.print("D16 "); Serial.print(d16, 2);
+  Serial.print("V | Calc "); Serial.print(calc, 2);
   Serial.println("V");
   delay(UI_MS);
 }
