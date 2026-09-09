@@ -1,10 +1,6 @@
 /*
   XIAO ESP32-S3 Plus 0.96-inch Display - Voltage Sense Demo
   Library: Seeed_GFX2
-  Matches the active voltage UI in 0715_DashBoard_114_ESP32:
-  yellow D16/Calc readings, without percentage or power-state inference.
-  Calc is D16 voltage multiplied by the hardware divider ratio.
-  USB-only readings are displayed too; they do not prove battery presence.
 */
 #include <Arduino.h>
 #include <math.h>
