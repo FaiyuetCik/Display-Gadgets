@@ -1,7 +1,7 @@
 /*
   XIAO ESP32-S3 Plus + 1.47 Inch Display IMU wake demo.
 
-  USR1 forces screen sleep. USR2 wakes manually.
+  USR1 wakes manually. USR2 forces screen sleep.
   LSM6-compatible IMU wake/motion INT1 on D14 wakes the screen.
 
   Adapted from:
@@ -37,8 +37,8 @@ static constexpr uint8_t I2C_SDA_PIN  = D4;
 static constexpr uint8_t I2C_SCL_PIN  = D5;
 
 static constexpr uint8_t IMU_INT_PIN  = 41;   // D14 -> GPIO41
-static constexpr uint8_t USR1_PIN     = 42;   // D15 -> GPIO42, force sleep
-static constexpr uint8_t USR2_PIN     = 11;   // D19 -> GPIO11, force wake
+static constexpr uint8_t USR1_PIN     = 11;   // D19 -> GPIO11, force wake
+static constexpr uint8_t USR2_PIN     = 42;   // D15 -> GPIO42, force sleep
 static constexpr uint8_t BAT_ADC_PIN  = 10;   // D16 -> GPIO10
 
 // ========================= IMU registers =========================
@@ -283,7 +283,7 @@ static void drawLayout() {
   display.print("TEST");
   display.setTextColor(C_WHITE, C_BLACK);
   display.setCursor(18, 288);
-  display.print("USR1 sleep  USR2 wake");
+  display.print("USR1 wake  USR2 sleep");
 }
 
 static void updateUi() {
@@ -355,7 +355,7 @@ static void screenSleep() {
 
 static void lightSleepWait() {
   gpio_wakeup_enable((gpio_num_t)IMU_INT_PIN, GPIO_INTR_HIGH_LEVEL);
-  gpio_wakeup_enable((gpio_num_t)USR2_PIN, GPIO_INTR_LOW_LEVEL);
+  gpio_wakeup_enable((gpio_num_t)USR1_PIN, GPIO_INTR_LOW_LEVEL);
   esp_sleep_enable_gpio_wakeup();
   esp_sleep_enable_timer_wakeup(250000);
   esp_light_sleep_start();
@@ -372,9 +372,9 @@ static void handleWakeEvents() {
 
   if (digitalRead(IMU_INT_PIN) == HIGH) pending = true;
 
-  if (digitalRead(USR2_PIN) == LOW) {
-    screenWake("USR2");
-    while (digitalRead(USR2_PIN) == LOW) delay(5);
+  if (digitalRead(USR1_PIN) == LOW) {
+    screenWake("USR1");
+    while (digitalRead(USR1_PIN) == LOW) delay(5);
     return;
   }
 
@@ -435,11 +435,11 @@ void loop() {
     return;
   }
 
-  if (digitalRead(USR1_PIN) == LOW) {
+  if (digitalRead(USR2_PIN) == LOW) {
     delay(30);
-    if (digitalRead(USR1_PIN) == LOW) {
+    if (digitalRead(USR2_PIN) == LOW) {
       screenSleep();
-      while (digitalRead(USR1_PIN) == LOW) delay(5);
+      while (digitalRead(USR2_PIN) == LOW) delay(5);
     }
   }
 
