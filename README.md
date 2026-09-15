@@ -203,6 +203,14 @@ Standalone single-feature demos under `code_GFX2/Function/`, migrated to **Seeed
 
 User-facing documentation is published on the [Seeed Studio Wiki](https://wiki.seeedstudio.com/). Look under **Sensor → LCD Displays → Display Gadgets**.
 
+- [XIAO Display Gadgets Series](https://wiki.seeedstudio.com/display_gadgets/) — overview & comparison
+- 1.47" ESP32-S3 Plus — [Getting Started](https://wiki.seeedstudio.com/getting_started_1.47_inch_touch_display_esp32s3) / [Function Demos](https://wiki.seeedstudio.com/function_1.47_inch_touch_display_esp32s3)
+- 1.47" nRF52840 Plus — [Getting Started](https://wiki.seeedstudio.com/getting_started_1.47_inch_touch_display_nrf52840) / [Function Demos](https://wiki.seeedstudio.com/function_1.47_inch_touch_display_nrf52840)
+- 1.14" ESP32-S3 Plus — [Getting Started](https://wiki.seeedstudio.com/getting_started_1.14_inch_display_esp32s3) / [Function Demos](https://wiki.seeedstudio.com/function_1.14_inch_display_esp32s3)
+- 1.14" nRF52840 Plus — [Getting Started](https://wiki.seeedstudio.com/getting_started_1.14_inch_display_nrf52840) / [Function Demos](https://wiki.seeedstudio.com/function_1.14_inch_display_nrf52840)
+- 0.96" ESP32-S3 Plus — [Getting Started](https://wiki.seeedstudio.com/getting_started_0.96_inch_display_esp32s3) / [Function Demos](https://wiki.seeedstudio.com/function_0.96_inch_display_esp32s3)
+- 0.96" nRF52840 Plus — [Getting Started](https://wiki.seeedstudio.com/getting_started_0.96_inch_display_nrf52840) / [Function Demos](https://wiki.seeedstudio.com/function_0.96_inch_display_nrf52840)
+
 ## Related Repositories
 
 - [Seeed_GFX2](https://github.com/Seeed-Studio/Seeed_GFX2) — Display graphics library

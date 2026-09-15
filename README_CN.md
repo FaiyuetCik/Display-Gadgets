@@ -203,6 +203,14 @@ Display-Gadgets/
 
 面向用户的文档发布在 [Seeed Studio Wiki](https://wiki.seeedstudio.com/)。请在 **Sensor → LCD Displays → Display Gadgets** 下查看。
 
+- [XIAO Display Gadgets Series](https://wiki.seeedstudio.com/display_gadgets/) — 概览与对比
+- 1.47" ESP32-S3 Plus — [入门指南](https://wiki.seeedstudio.com/getting_started_1.47_inch_touch_display_esp32s3) / [功能演示](https://wiki.seeedstudio.com/function_1.47_inch_touch_display_esp32s3)
+- 1.47" nRF52840 Plus — [入门指南](https://wiki.seeedstudio.com/getting_started_1.47_inch_touch_display_nrf52840) / [功能演示](https://wiki.seeedstudio.com/function_1.47_inch_touch_display_nrf52840)
+- 1.14" ESP32-S3 Plus — [入门指南](https://wiki.seeedstudio.com/getting_started_1.14_inch_display_esp32s3) / [功能演示](https://wiki.seeedstudio.com/function_1.14_inch_display_esp32s3)
+- 1.14" nRF52840 Plus — [入门指南](https://wiki.seeedstudio.com/getting_started_1.14_inch_display_nrf52840) / [功能演示](https://wiki.seeedstudio.com/function_1.14_inch_display_nrf52840)
+- 0.96" ESP32-S3 Plus — [入门指南](https://wiki.seeedstudio.com/getting_started_0.96_inch_display_esp32s3) / [功能演示](https://wiki.seeedstudio.com/function_0.96_inch_display_esp32s3)
+- 0.96" nRF52840 Plus — [入门指南](https://wiki.seeedstudio.com/getting_started_0.96_inch_display_nrf52840) / [功能演示](https://wiki.seeedstudio.com/function_0.96_inch_display_nrf52840)
+
 ## 相关仓库
 
 - [Seeed_GFX2](https://github.com/Seeed-Studio/Seeed_GFX2) — 屏幕图形库
