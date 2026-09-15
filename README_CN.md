@@ -26,14 +26,15 @@ Display-Gadgets/
 │       ├── 114_ESP32/
 │       ├── 096_nRF52840/
 │       └── 096_ESP32/
-├── code_GFX2/                     Seeed_GFX2 迁移版 Function demo（当前）
-│   └── Function/
-│       ├── 147_nRF52840/
-│       ├── 147_ESP32/
-│       ├── 114_nRF52840/
-│       ├── 114_ESP32/
-│       ├── 096_nRF52840/
-│       └── 096_ESP32/
+├── code_GFX2/                     Seeed_GFX2 迁移版 demo（当前）
+│   ├── Function/                  独立单功能演示
+│   │   ├── 147_nRF52840/
+│   │   ├── 147_ESP32/
+│   │   ├── 114_nRF52840/
+│   │   ├── 114_ESP32/
+│   │   ├── 096_nRF52840/
+│   │   └── 096_ESP32/
+│   └── getting_started_code/      最小 "Hello, XIAO" 入门 sketch（6 款）
 ├── resources/              硬件资源：KiCad、原理图、3D 模型、数据手册、外壳、出厂固件
 └── schematics/             全部 6 款产品的 PDF 原理图
 ```
@@ -64,6 +65,19 @@ Display-Gadgets/
 | `code/example/basic/xiao_esp32s3_114_bat` | 电池 ADC — D16，316k/160k 分压，ratio ≈ 2.975 |
 | `code/example/basic/xiao_esp32s3_114_i2c_scan` | Grove I2C 扫描器 — D4=SDA, D5=SCL |
 | `code/example/basic/xiao_esp32s3_114_i2s` | I2S 音频输出测试 (D11=DIN, D12=BCLK, D13=LRC/WS) |
+
+## 入门演示
+
+`code_GFX2/getting_started_code/` 下的最小 **"Hello, XIAO"** sketch，用于 wiki 入门指南。每个 sketch 打开背光、填满黑屏，并以两行居中的大号绿色文字显示 **"Hello,"** 和 **"XIAO"**。
+
+| 目录 | 说明 |
+|-----------|-------------|
+| `code_GFX2/getting_started_code/xiao_nrf52840_147_hello` | 1.47" nRF52840 Plus |
+| `code_GFX2/getting_started_code/xiao_esp32s3_147_hello` | 1.47" ESP32-S3 Plus |
+| `code_GFX2/getting_started_code/xiao_nrf52840_114_hello` | 1.14" nRF52840 Plus |
+| `code_GFX2/getting_started_code/xiao_esp32s3_114_hello` | 1.14" ESP32-S3 Plus |
+| `code_GFX2/getting_started_code/xiao_nrf52840_096_hello` | 0.96" nRF52840 Plus |
+| `code_GFX2/getting_started_code/xiao_esp32s3_096_hello` | 0.96" ESP32-S3 Plus |
 
 ## Function 演示
 

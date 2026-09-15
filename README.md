@@ -26,14 +26,15 @@ Display-Gadgets/
 │       ├── 114_ESP32/
 │       ├── 096_nRF52840/
 │       └── 096_ESP32/
-├── code_GFX2/                     Seeed_GFX2-migrated Function demos (current)
-│   └── Function/
-│       ├── 147_nRF52840/
-│       ├── 147_ESP32/
-│       ├── 114_nRF52840/
-│       ├── 114_ESP32/
-│       ├── 096_nRF52840/
-│       └── 096_ESP32/
+├── code_GFX2/                     Seeed_GFX2-migrated demos (current)
+│   ├── Function/                  Standalone single-feature demos
+│   │   ├── 147_nRF52840/
+│   │   ├── 147_ESP32/
+│   │   ├── 114_nRF52840/
+│   │   ├── 114_ESP32/
+│   │   ├── 096_nRF52840/
+│   │   └── 096_ESP32/
+│   └── getting_started_code/      Minimal "Hello, XIAO" getting-started sketches (6 models)
 ├── resources/              Hardware resources: KiCad, schematic, 3D model, datasheet, enclosure, factory firmware
 └── schematics/             PDF schematics for all 6 products
 ```
@@ -64,6 +65,19 @@ Each subdirectory under `code/example/basic/` is a standalone Arduino sketch for
 | `code/example/basic/xiao_esp32s3_114_bat` | Battery ADC via D16 — 316k/160k divider, ratio ≈ 2.975 |
 | `code/example/basic/xiao_esp32s3_114_i2c_scan` | Grove I2C scanner on D4=SDA, D5=SCL |
 | `code/example/basic/xiao_esp32s3_114_i2s` | I2S audio output test (D11=DIN, D12=BCLK, D13=LRC/WS) |
+
+## Getting Started Demos
+
+Minimal **"Hello, XIAO"** sketches under `code_GFX2/getting_started_code/`, used by the wiki getting-started guides. Each turns on the backlight, fills the screen black, and prints **"Hello,"** and **"XIAO"** as two centered lines of large green text — the fastest way to confirm the screen and your development environment are working.
+
+| Directory | Description |
+|-----------|-------------|
+| `code_GFX2/getting_started_code/xiao_nrf52840_147_hello` | 1.47" nRF52840 Plus |
+| `code_GFX2/getting_started_code/xiao_esp32s3_147_hello` | 1.47" ESP32-S3 Plus |
+| `code_GFX2/getting_started_code/xiao_nrf52840_114_hello` | 1.14" nRF52840 Plus |
+| `code_GFX2/getting_started_code/xiao_esp32s3_114_hello` | 1.14" ESP32-S3 Plus |
+| `code_GFX2/getting_started_code/xiao_nrf52840_096_hello` | 0.96" nRF52840 Plus |
+| `code_GFX2/getting_started_code/xiao_esp32s3_096_hello` | 0.96" ESP32-S3 Plus |
 
 ## Function Demos
 
