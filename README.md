@@ -201,7 +201,7 @@ Standalone single-feature demos under `code_GFX2/Function/`, migrated to **Seeed
 
 ## Wiki
 
-User-facing documentation is published on the [Seeed Studio Wiki](https://wiki.seeedstudio.com/). Look under **Sensor → LCD Displays → Display Gadgets**.
+User-facing documentation is published on the [Seeed Studio Wiki](https://wiki.seeedstudio.com/). Look under **Sensor → LCD Displays → XIAO Display Gadgets**.
 
 - [XIAO Display Gadgets Series](https://wiki.seeedstudio.com/display_gadgets/) — overview & comparison
 - 1.47" ESP32-S3 Plus — [Getting Started](https://wiki.seeedstudio.com/getting_started_1.47_inch_touch_display_esp32s3) / [Function Demos](https://wiki.seeedstudio.com/function_1.47_inch_touch_display_esp32s3)

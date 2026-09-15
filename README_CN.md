@@ -201,7 +201,7 @@ Display-Gadgets/
 
 ## Wiki
 
-面向用户的文档发布在 [Seeed Studio Wiki](https://wiki.seeedstudio.com/)。请在 **Sensor → LCD Displays → Display Gadgets** 下查看。
+面向用户的文档发布在 [Seeed Studio Wiki](https://wiki.seeedstudio.com/)。请在 **Sensor → LCD Displays → XIAO Display Gadgets** 下查看。
 
 - [XIAO Display Gadgets Series](https://wiki.seeedstudio.com/display_gadgets/) — 概览与对比
 - 1.47" ESP32-S3 Plus — [入门指南](https://wiki.seeedstudio.com/getting_started_1.47_inch_touch_display_esp32s3) / [功能演示](https://wiki.seeedstudio.com/function_1.47_inch_touch_display_esp32s3)
