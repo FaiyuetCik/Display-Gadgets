@@ -93,6 +93,7 @@ Display-Gadgets/
 | `code_GFX2/Function/147_ESP32/xiao_esp32s3plus_147_sd_bmp_reader_diag_v0_8` | SD BMP 图片浏览器 — 从 SD 卡显示 BMP（诊断版） |
 | `code_GFX2/Function/147_ESP32/xiao_esp32s3_147_electronic_quicksand` | 电子流沙 — IMU 驱动的粒子流体模拟 |
 | `code_GFX2/Function/147_ESP32/xiao_esp32s3_147_wakeup` | 抬手亮屏 — IMU 运动唤醒 |
+| `code_GFX2/Function/147_ESP32/xiao_esp32s3_147_battery_status` | 电池电压检测 — 测量 D16 分压电压 |
 
 ### 1.14" nRF52840 Plus
 
@@ -116,6 +117,7 @@ Display-Gadgets/
 | `code_GFX2/Function/114_ESP32/xiao_esp32s3_114_flash_record` | Flash 录音回放 — PDM 麦克风 → LittleFS → I2S 扬声器（无需 SD 卡） |
 | `code_GFX2/Function/114_ESP32/xiao_esp32s3_114_voice_bar` | 大音量条 — PDM 麦克风实时波形 + 分段柱状图 |
 | `code_GFX2/Function/114_ESP32/xiao_esp32s3_114_sht31_temperature_humidity` | SHT31 温湿度传感器读取 |
+| `code_GFX2/Function/114_ESP32/xiao_esp32s3_114_battery_status` | 电池电压检测 — 测量 D16 分压电压 |
 
 ### 0.96" nRF52840 Plus
 
@@ -135,6 +137,7 @@ Display-Gadgets/
 | `code_GFX2/Function/096_ESP32/xiao_esp32s3_096_electronic_quicksand` | 电子流沙 — IMU 驱动的粒子流体模拟 |
 | `code_GFX2/Function/096_ESP32/xiao_esp32s3_096_wakeup` | 抬手亮屏 — IMU 运动唤醒（light sleep） |
 | `code_GFX2/Function/096_ESP32/xiao_esp32s3_096_flash_record` | Flash 录音回放 — PDM 麦克风 → LittleFS → I2S 扬声器（需 SPIFFS 分区） |
+| `code_GFX2/Function/096_ESP32/xiao_esp32s3_096_battery_status` | 电池电压检测 — 测量 D16 分压电压 |
 
 ## 提示和已知问题
 

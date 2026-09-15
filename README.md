@@ -93,6 +93,7 @@ Standalone single-feature demos under `code_GFX2/Function/`, migrated to **Seeed
 | `code_GFX2/Function/147_ESP32/xiao_esp32s3plus_147_sd_bmp_reader_diag_v0_8` | SD BMP reader — display BMP files from SD (diagnostic version) |
 | `code_GFX2/Function/147_ESP32/xiao_esp32s3_147_electronic_quicksand` | Electronic Quicksand — IMU-driven particle fluid simulation |
 | `code_GFX2/Function/147_ESP32/xiao_esp32s3_147_wakeup` | Raise to Wake — IMU motion wake-up |
+| `code_GFX2/Function/147_ESP32/xiao_esp32s3_147_battery_status` | Battery Voltage Detection — measure the D16 divider voltage |
 
 ### 1.14" nRF52840 Plus
 
@@ -116,6 +117,7 @@ Standalone single-feature demos under `code_GFX2/Function/`, migrated to **Seeed
 | `code_GFX2/Function/114_ESP32/xiao_esp32s3_114_flash_record` | Flash audio record/playback — PDM mic → LittleFS → I2S speaker (no SD card needed) |
 | `code_GFX2/Function/114_ESP32/xiao_esp32s3_114_voice_bar` | Big Volume Bar — PDM mic real-time waveform + segmented meter |
 | `code_GFX2/Function/114_ESP32/xiao_esp32s3_114_sht31_temperature_humidity` | SHT31 temperature & humidity sensor readout |
+| `code_GFX2/Function/114_ESP32/xiao_esp32s3_114_battery_status` | Battery Voltage Detection — measure the D16 divider voltage |
 
 ### 0.96" nRF52840 Plus
 
@@ -135,6 +137,7 @@ Standalone single-feature demos under `code_GFX2/Function/`, migrated to **Seeed
 | `code_GFX2/Function/096_ESP32/xiao_esp32s3_096_electronic_quicksand` | Electronic Quicksand — IMU-driven particle fluid simulation |
 | `code_GFX2/Function/096_ESP32/xiao_esp32s3_096_wakeup` | Raise to Wake — IMU motion wake-up (light sleep) |
 | `code_GFX2/Function/096_ESP32/xiao_esp32s3_096_flash_record` | Flash audio record/playback — PDM mic → LittleFS → I2S speaker (needs SPIFFS partition) |
+| `code_GFX2/Function/096_ESP32/xiao_esp32s3_096_battery_status` | Battery Voltage Detection — measure the D16 divider voltage |
 
 ## Tips & Known Issues
 
